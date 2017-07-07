@@ -1,0 +1,395 @@
+package ru.lischenko_dev.fastmessenger.vkapi.models;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+
+import ru.lischenko_dev.fastmessenger.vkapi.Api;
+
+public class VKMessage implements Serializable {
+    public static final int UNREAD = 1;        //сообщение не прочитано
+    public static final int OUTBOX = 2;        //исходящее сообщение
+    public static final int REPLIED = 4;        //на сообщение был создан ответ
+    public static final int IMPORTANT = 8;    //помеченное сообщение
+    public static final int CHAT = 16;        //сообщение отправлено через диалог
+    public static final int FRIENDS = 32;        //сообщение отправлено другом
+    public static final int SPAM = 64;        //сообщение помечено как "Спам"
+    public static final int DELETED = 128;    //сообщение удалено (в корзине)
+    public static final int FIXED = 256;        //сообщение проверено пользователем на спам
+    public static final int MEDIA = 512;        //сообщение содержит медиаконтент
+    public static final int BESEDA = 8192;    //беседа
+    private static final long serialVersionUID = 1L;
+
+    public static final String ACTION_CHAT_CREATE = "chat_create";
+    public static final String ACTION_CHAT_INVITE_USER = "chat_invite_user";
+    public static final String ACTION_CHAT_KICK_USER = "chat_kick_user";
+
+    public static final String ACTION_CHAT_TITLE_UPDATE = "chat_title_update";
+    public static final String ACTION_CHAT_PHOTO_UPDATE = "chat_photo_update";
+    public static final String ACTION_CHAT_PHOTO_REMOVE = "chat_photo_remove";
+
+    public boolean is_new = false;
+    public boolean is_sending = false;
+
+    public String action = null;
+    public Long action_mid = 0L;
+    /**
+     * Message ID. (Not returned for forwarded messages), positive number
+     */
+    public long mid;
+    /**
+     * For an incoming message, the user ID of the author. For an outgoing message, the user ID of the receiver.
+     */
+    public long uid;
+    /**
+     * Date (in Unix time) when the message was sent.
+     */
+    public long date;
+    /**
+     * Title of message or chat.
+     */
+    public String title;
+    /**
+     * Message status (false — not read, true — read). (Not returned for forwarded messages).
+     */
+    public String body;
+    /**
+     * Date (in Unix time) when the message was sent.
+     */
+    public boolean read_state;
+    /**
+     * type (false — received, true — sent). (Not returned for forwarded messages.)
+     */
+    public boolean is_out;
+    /**
+     * List of media-attachments;
+     */
+    public ArrayList<VKAttachment> attachments = new ArrayList<>();
+    /**
+     * Chat ID
+     */
+    public long chat_id;
+    /**
+     * User IDs of chat participants
+     */
+    public ArrayList<Long> chat_members;
+    public Boolean push_enabled = true;
+    /**
+     * ID of user who started the chat.
+     */
+    public Long admin_id;
+    /**
+     * Number of chat participants.
+     */
+    public Long users_count;
+    /**
+     * Whether the message is deleted (false — no, true — yes).
+     */
+    public boolean is_deleted;
+    /**
+     * Whether the message is important
+     */
+    public boolean is_important;
+    /**
+     * URL of chat image with width size of 50px
+     */
+    public String photo_50;
+    /**
+     * URL of chat image with width size of 100px
+     */
+    public String photo_100;
+    /**
+     * URL of chat image with width size of 200px
+     */
+    public String photo_200;
+    /**
+     * The count of unread messages
+     */
+    public long unread;
+    public long count;
+    public int flag;
+    public String action_text;
+
+    public static boolean isUnread(int flags) {
+        return (flags & UNREAD) != 0;
+    }
+
+    @Deprecated
+    public static VKMessage parse(JSONObject o, boolean from_history, long history_uid, boolean from_chat, long me) throws NumberFormatException, JSONException {
+        VKMessage m = new VKMessage();
+        if (from_chat) {
+            long from_id = o.getLong("user_id");
+            m.uid = from_id;
+            m.is_out = (from_id == me);
+        } else if (from_history) {
+            m.uid = history_uid;
+            Long from_id = o.getLong("from_id");
+            m.is_out = !(from_id == history_uid);
+        } else {
+            //тут не очень, потому что при получении списка диалогов если есть моё сообщение, которое я написал в беседу, то в нём uid будет мой. Хотя в других случайх uid всегда собеседника.
+            // TODO: Впрочем, это вполне нормально
+            m.uid = o.getLong("user_id");
+            m.is_out = o.optInt("out") == 1;
+        }
+        m.mid = o.optLong("id");
+        if (o.has("action")) {
+            m.action = o.optString("action");
+            m.action_text = o.optString("action_text");
+            m.action_mid = o.optLong("action_mid");
+        }
+
+        m.date = o.optLong("date");
+        if (o.has("users_count")) m.users_count = o.optLong("users_count");
+        m.title = Api.unescape(o.optString("title"));
+        m.body = Api.unescapeWithSmiles(o.optString("body"));
+        m.read_state = (o.optInt("read_state") == 1);
+        if (o.has("chat_id"))
+            m.chat_id = o.getLong("chat_id");
+
+        //for dialog list
+        JSONArray tmp = o.optJSONArray("chat_active");
+        if (tmp != null && tmp.length() != 0) {
+            m.chat_members = new ArrayList<Long>();
+            for (int i = 0; i < tmp.length(); ++i)
+                m.chat_members.add(tmp.getLong(i));
+        }
+
+        JSONArray ps = o.optJSONArray("push_enabled");
+        if (ps != null)
+            m.push_enabled = false;
+        else
+            m.push_enabled = true;
+
+        JSONArray attachments = o.optJSONArray("attachments");
+        JSONObject geo_json = o.optJSONObject("geo");
+        m.attachments = VKAttachment.parseAttachments(attachments, 0, 0, geo_json);
+
+        //parseArray fwd_messages and add them to attachments
+        JSONArray fwd_messages = o.optJSONArray("fwd_messages");
+        if (fwd_messages != null) {
+            for (int i = 0; i < fwd_messages.length(); ++i) {
+                JSONObject fwd_message_json = fwd_messages.getJSONObject(i);
+                VKMessage fwd_message = VKMessage.parse(fwd_message_json, false, 0, false, 0);
+                VKAttachment att = new VKAttachment();
+                att.type = "message";
+                att.message = fwd_message;
+                m.attachments.add(att);
+            }
+        }
+
+        return m;
+    }
+
+    public static VKMessage parse(JSONObject sourse) throws JSONException {
+        VKMessage message = new VKMessage();
+        message.mid = sourse.optLong("id");
+        message.uid = sourse.optLong("user_id");
+        message.chat_id = sourse.optLong("chat_id");
+        message.date = sourse.optLong("date");
+        message.is_out = sourse.optLong("out") == 1;
+        message.read_state = sourse.optLong("read_state") == 1;
+        message.title = Api.unescape(sourse.optString("title"));
+        message.body = Api.unescapeWithSmiles(sourse.optString("body"));
+        message.users_count = sourse.optLong("users_count");
+        message.is_deleted = sourse.optLong("deleted") == 1;
+        message.is_important = sourse.optLong("important") == 1;
+        message.photo_50 = sourse.optString("photo_50");
+        message.photo_100 = sourse.optString("photo_100");
+        message.photo_200 = sourse.optString("photo_200");
+
+        if (sourse.has("action")) {
+            message.action = sourse.optString("action");
+            message.action_text = sourse.optString("action_text");
+            message.action_mid = sourse.optLong("action_mid");
+        }
+
+        JSONArray atts = sourse.optJSONArray("attachments");
+        if (atts != null) {
+            message.attachments = VKAttachment.parseArray(atts);
+        }
+
+        JSONArray fwdMessages = sourse.optJSONArray("fwd_messages");
+        if (fwdMessages != null) {
+            for (int i = 0; i < fwdMessages.length(); i++) {
+                VKMessage fwd_msg = VKMessage.parse(fwdMessages.optJSONObject(i));
+                VKAttachment att = new VKAttachment();
+                att.type = VKAttachment.TYPE_MESSAGE;
+                att.message = fwd_msg;
+                message.attachments.add(att);
+            }
+        }
+
+        JSONArray chat_active = sourse.optJSONArray("chat_active");
+        if (chat_active != null) {
+            for (int i = 0; i < chat_active.length(); i++) {
+                message.chat_members = new ArrayList<>();
+                message.chat_members.add(chat_active.optLong(i));
+            }
+        }
+
+        // TODO: from_id возврвщается только тогда, когда получаем историю
+        long from_id = sourse.optLong("from_id", -1);
+        if (from_id != -1 && message.chat_id != 0) {
+            message.uid = from_id;
+        }
+
+        return message;
+    }
+
+    public static ArrayList<VKMessage> parseArray(JSONArray array) throws JSONException {
+        ArrayList<VKMessage> vkMessages = new ArrayList<>();
+        for (int i = 0; i < array.length(); i++) {
+            JSONObject item = array.optJSONObject(i);
+            VKMessage message;
+            if (item.has("message")) {
+                message = VKMessage.parse(item.optJSONObject("message"));
+                message.unread = item.optInt("unread");
+                message.count = item.optInt("count");
+            } else {
+                message = VKMessage.parse(item);
+            }
+
+            vkMessages.add(message);
+        }
+
+        return vkMessages;
+    }
+
+    // parse from long poll (update[])
+    public static VKMessage parse(JSONArray a) throws JSONException {
+        VKMessage m = new VKMessage();
+        m.mid = a.optLong(1);
+        m.flag = a.optInt(2);
+        m.uid = a.optInt(3);
+        m.date = a.optLong(4);
+        m.title = Api.unescape(a.optString(5));
+        m.body = Api.unescapeWithSmiles(a.optString(6));
+        m.read_state = ((m.flag & UNREAD) == 0);
+        m.is_out = (m.flag & OUTBOX) != 0;
+        if ((m.flag & BESEDA) != 0) {
+            m.chat_id = a.optLong(3) - 2000000000;// & 63;//cut 6 last digits
+            JSONObject o = a.optJSONObject(7);
+            m.uid = o.optLong("from");
+        }
+
+
+        // m.attachment = a.getJSONArray(7); TODO
+        m.attachments = VKAttachment.parseArray(a.optJSONArray(7));
+        return m;
+    }
+
+    public static VKMessage parseReadMessages(JSONArray a) throws JSONException {
+        VKMessage m = new VKMessage();
+        m.mid = a.optLong(2);
+        return m;
+    }
+
+
+    public static ArrayList<SearchDialogItem> parseSearchedDialogs(JSONArray array) {
+        ArrayList<SearchDialogItem> items = new ArrayList<SearchDialogItem>();
+        if (array == null)
+            return items;
+        try {
+            int category_count = array.length();
+            for (int i = 0; i < category_count; ++i) {
+                if (array.get(i) == null || (!(array.get(i) instanceof JSONObject)))
+                    continue;
+                JSONObject o = (JSONObject) array.get(i);
+                SearchDialogItem item = new SearchDialogItem();
+                String type = o.getString("type");
+                item.str_type = type;
+                switch (type) {
+                    case "profile":
+                        item.type = SearchDialogItem.SDIType.USER;
+                        item.user = VKFullUser.parse(o);
+                        break;
+                    case "chat":
+                        item.type = SearchDialogItem.SDIType.CHAT;
+                        VKMessage m = new VKMessage();
+                        m.chat_id = o.getLong("id");
+                        m.admin_id = o.getLong("admin_id");
+                        m.title = o.getString("title");
+                        JSONArray users = o.optJSONArray("users");
+                        if (users != null && users.length() != 0) {
+                            m.chat_members = new ArrayList<Long>();
+                            for (int j = 0; j < users.length(); j++)
+                                m.chat_members.add(users.getLong(j));
+                        }
+                        item.chat = m;
+                        break;
+                    default:
+                        item.type = SearchDialogItem.SDIType.EMAIL;
+                        item.email = o.optString("email");
+                        break;
+                }
+                items.add(item);
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return items;
+    }
+
+    public boolean isChat() {
+        return chat_id != 0;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        VKMessage message = (VKMessage) o;
+
+        if (chat_id != message.chat_id) return false;
+        if (date != message.date) return false;
+        if (is_deleted != message.is_deleted) return false;
+        if (is_important != message.is_important) return false;
+        if (is_out != message.is_out) return false;
+        if (mid != message.mid) return false;
+        if (read_state != message.read_state) return false;
+        if (uid != message.uid) return false;
+        if (users_count != message.users_count) return false;
+        if (admin_id != null ? !admin_id.equals(message.admin_id) : message.admin_id != null)
+            return false;
+        if (attachments != null ? !attachments.equals(message.attachments) : message.attachments != null)
+            return false;
+        if (body != null ? !body.equals(message.body) : message.body != null) return false;
+        if (chat_members != null ? !chat_members.equals(message.chat_members) : message.chat_members != null)
+            return false;
+        if (photo_100 != null ? !photo_100.equals(message.photo_100) : message.photo_100 != null)
+            return false;
+        if (photo_200 != null ? !photo_200.equals(message.photo_200) : message.photo_200 != null)
+            return false;
+        if (photo_50 != null ? !photo_50.equals(message.photo_50) : message.photo_50 != null)
+            return false;
+        return !(title != null ? !title.equals(message.title) : message.title != null);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = (int) (mid ^ (mid >>> 32));
+        result = 31 * result + (int) (uid ^ (uid >>> 32));
+        result = 31 * result + (int) (date ^ (date >>> 32));
+        result = 31 * result + (title != null ? title.hashCode() : 0);
+        result = 31 * result + (body != null ? body.hashCode() : 0);
+        result = 31 * result + (read_state ? 1 : 0);
+        result = 31 * result + (is_out ? 1 : 0);
+        result = 31 * result + (attachments != null ? attachments.hashCode() : 0);
+        result = 31 * result + (int) (chat_id ^ (chat_id >>> 32));
+        result = 31 * result + (chat_members != null ? chat_members.hashCode() : 0);
+        result = 31 * result + (admin_id != null ? admin_id.hashCode() : 0);
+        result = 31 * result + (int) (users_count ^ (users_count >>> 32));
+        result = 31 * result + (is_deleted ? 1 : 0);
+        result = 31 * result + (is_important ? 1 : 0);
+        result = 31 * result + (photo_50 != null ? photo_50.hashCode() : 0);
+        result = 31 * result + (photo_100 != null ? photo_100.hashCode() : 0);
+        result = 31 * result + (photo_200 != null ? photo_200.hashCode() : 0);
+        result = 31 * result + flag;
+        return result;
+    }
+}

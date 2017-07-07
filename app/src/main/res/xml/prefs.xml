@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+	<PreferenceCategory android:title="Application" />
+		
+	<PreferenceScreen
+		android:key="check_updates"
+		android:title="Updates"
+		android:summary="Check updates" />
+	
+	<PreferenceCategory android:title="Design" />
+
+	<SwitchPreference
+		android:key="dark_theme"
+		android:title="Dark Theme"
+		android:defaultValue="false" />
+
+
+    <PreferenceCategory android:title="Functionality" />
+
+    <EditTextPreference
+        android:id="@android:id/edit"
+        android:key="template"
+        android:summary="Message Template"
+        android:title="Template" />
+
+	<PreferenceCategory android:title="Other"/>
+
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="show_login"
+        android:summary="Show login page"
+        android:title="Login Page" />
+
+	<PreferenceCategory android:title="Debug"/>
+
+	<PreferenceScreen
+		android:key="error_instruction"
+		android:title="OH, Error!"
+		android:summary="What i need do if cause error" />
+
+
+</PreferenceScreen>

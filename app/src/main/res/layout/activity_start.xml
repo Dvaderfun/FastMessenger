@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+	android:gravity="center"
+	android:orientation="vertical">
+
+	<LinearLayout
+		android:id="@+id/rl"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_weight="2"
+		android:gravity="center">
+
+		<ImageView
+			android:layout_width="wrap_content"
+			android:layout_height="180dp"
+			android:src="@mipmap/ic_launcher_beta"/>
+
+	</LinearLayout>
+
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_weight="1"
+		android:gravity="bottom|center_horizontal"
+		android:orientation="vertical"
+		android:id="@+id/downLLStart">
+
+		<ru.lischenko_dev.fastmessenger.view.CircleImageView
+			android:id="@+id/ivAva"
+			android:layout_width="60dp"
+			android:layout_height="60dp"
+			android:layout_marginBottom="35dp"
+			android:src="@drawable/camera_200"
+			app:border_color="#1565c0"
+			app:border_width="2dp"/>
+
+		<android.support.v7.widget.AppCompatButton
+			android:id="@+id/btnLogin"
+			android:layout_width="260dp"
+			android:layout_height="55dp"
+			android:textSize="10pt"
+			android:layout_marginBottom="20dp"
+			android:textColor="?colorAccent"
+			android:background="@drawable/btn_selector_bg" />
+
+	</LinearLayout>
+
+</LinearLayout>
+

@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="SlideUp-Android-2.2.5">
+    <CLASSES>
+      <root url="file://$USER_HOME$/.android/build-cache/7e0485d1673afad5c1ecc82b0d2990483a40830c/output/res" />
+      <root url="jar://$USER_HOME$/.android/build-cache/7e0485d1673afad5c1ecc82b0d2990483a40830c/output/jars/classes.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.github.mancj/SlideUp-Android/2.2.5/d41f1242949d709690b331993d10c51861ee259c/SlideUp-Android-2.2.5-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

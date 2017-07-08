@@ -1,46 +1,21 @@
 package ru.lischenko_dev.fastmessenger.adapter;
 
-import android.content.Context;
-import android.graphics.Color;
-import android.graphics.Typeface;
-import android.support.annotation.Nullable;
-import android.text.Spannable;
-import android.text.SpannableString;
-import android.text.Spanned;
-import android.text.TextUtils;
-import android.text.style.StyleSpan;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-
-import com.squareup.picasso.Picasso;
-
-import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
-
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-
-import ru.lischenko_dev.fastmessenger.R;
-import ru.lischenko_dev.fastmessenger.util.Account;
-import ru.lischenko_dev.fastmessenger.view.CircleView;
-import ru.lischenko_dev.fastmessenger.vkapi.VKUtils;
-import ru.lischenko_dev.fastmessenger.vkapi.models.VKMessage;
-import ru.lischenko_dev.fastmessenger.util.*;
-import android.support.v7.widget.*;
-import ru.lischenko_dev.fastmessenger.view.*;
-import ru.lischenko_dev.fastmessenger.vkapi.models.*;
+import android.content.*;
 import android.graphics.*;
-import android.view.Display.*;
 import android.text.*;
+import android.text.style.*;
+import android.util.*;
+import android.view.*;
+import android.widget.*;
+import com.squareup.picasso.*;
+import java.text.*;
+import java.util.*;
+import org.greenrobot.eventbus.*;
+import ru.lischenko_dev.fastmessenger.*;
+import ru.lischenko_dev.fastmessenger.util.*;
+import ru.lischenko_dev.fastmessenger.view.*;
+import ru.lischenko_dev.fastmessenger.vkapi.*;
+import ru.lischenko_dev.fastmessenger.vkapi.models.*;
 
 public class MessagesAdapter extends BaseAdapter {
     private Context context;
@@ -66,6 +41,8 @@ public class MessagesAdapter extends BaseAdapter {
                 return (x > y) ? -1 : ((x == y) ? 1 : 0);
             }
         };
+		
+	
         EventBus.getDefault().register(this);
 
     }
@@ -216,17 +193,18 @@ public class MessagesAdapter extends BaseAdapter {
             @Override
             public void run() {
                 try {
+					VKFullUser user = Api.init(account).getProfile(msg.uid);
                     int index = searchMessageIndex(msg.uid, msg.chat_id);
                     if (index >= 0) {
                         MessagesItem c = items.get(index);
                         VKMessage current = c.message;
-                        current.mid = msg.mid;
+						VKFullUser currentUser = c.user;
+                       /* current.mid = msg.mid;
 						if(!msg.attachments.isEmpty() && TextUtils.isEmpty(msg.body))
 						for(VKAttachment att : msg.attachments) {
 							current.body = VKUtils.getStringAttachment(att.type);
 						} else
 						current.body = msg.body;
-                        
                         current.title = msg.title;
                         current.date = msg.date;
                         current.uid = msg.uid;
@@ -237,10 +215,11 @@ public class MessagesAdapter extends BaseAdapter {
                         current.unread++;
                         if (current.is_out) {
                             current.unread = 0;
-                        }
-
-                        Collections.sort(items, comparator);
-                        notifyDataSetChanged();
+                        }*/
+						//items.remove(msg.isChat() ? current : currentUser);
+						//items.add(new MessagesItem(msg, user));
+                       // Collections.sort(items, comparator);
+                    //    notifyDataSetChanged();
                     }
                 } catch (Exception e) {
                     e.printStackTrace();

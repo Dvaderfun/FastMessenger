@@ -27,6 +27,7 @@ public class App extends Application
     public void onCreate()
 	{
         super.onCreate();
+		if(!Build.BRAND.toLowerCase().contains("xiaomi"))
 		ACRA.init(this);
         context = getApplicationContext();
         screenHeight = Utils.getDisplayHeight(this);

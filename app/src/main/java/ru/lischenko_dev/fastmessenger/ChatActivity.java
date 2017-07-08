@@ -1,55 +1,29 @@
 package ru.lischenko_dev.fastmessenger;
 
-import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.graphics.Color;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.support.design.widget.Snackbar;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.AppCompatButton;
-import android.support.v7.widget.AppCompatEditText;
-import android.support.v7.widget.AppCompatImageButton;
-import android.support.v7.widget.Toolbar;
-import android.text.Editable;
-import android.text.TextUtils;
-import android.text.TextWatcher;
-import android.util.Log;
-import android.view.Gravity;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.inputmethod.InputMethodManager;
-import android.widget.AbsListView;
-import android.widget.ListView;
-import android.widget.ProgressBar;
-import android.widget.Toast;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-
-import ru.lischenko_dev.fastmessenger.adapter.ChatAdapter;
-
-import ru.lischenko_dev.fastmessenger.util.Account;
-import ru.lischenko_dev.fastmessenger.util.Constants;
-import ru.lischenko_dev.fastmessenger.util.Utils;
-import ru.lischenko_dev.fastmessenger.vkapi.Api;
-import ru.lischenko_dev.fastmessenger.vkapi.models.VKChat;
-import ru.lischenko_dev.fastmessenger.vkapi.models.VKFullUser;
-import ru.lischenko_dev.fastmessenger.vkapi.models.VKMessage;
-import ru.lischenko_dev.fastmessenger.util.*;
-import android.graphics.drawable.*;
+import android.content.*;
 import android.graphics.*;
+import android.graphics.drawable.*;
 import android.os.*;
+import android.support.design.widget.*;
+import android.support.v7.app.*;
+import android.support.v7.widget.*;
+import android.text.*;
+import android.view.*;
+import android.widget.*;
+import java.util.*;
+import ru.lischenko_dev.fastmessenger.adapter.*;
+import ru.lischenko_dev.fastmessenger.util.*;
+import ru.lischenko_dev.fastmessenger.vkapi.*;
+import ru.lischenko_dev.fastmessenger.vkapi.models.*;
+
+import android.support.v7.widget.Toolbar;
 
 public class ChatActivity extends AppCompatActivity {
 
     private Account account = new Account();
     private Api api;
 
-    private ArrayList<VKMessage> items;
+    private ArrayList<ChatItems> items;
     private ChatAdapter adapter;
 
     private ListView lv;
@@ -65,7 +39,7 @@ public class ChatActivity extends AppCompatActivity {
     private boolean isLoaded;
 
     private VKChat chat;
-	
+
 	private ThemeManager manager;
 
 
@@ -90,7 +64,7 @@ public class ChatActivity extends AppCompatActivity {
 
         lv.setStackFromBottom(true);
 
-		if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
 			toolbar.setElevation(8);
 
         View listViewFooter = new View(this);
@@ -104,42 +78,42 @@ public class ChatActivity extends AppCompatActivity {
         btnSend.setColorFilter(Color.GRAY);
 
         btnSmile.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View view) {
-                String template = Utils.getPrefs(getApplicationContext()).getString("template", "");
-                if (template.length() > 0) {
-                    et.setText(et.getText().toString() + template);
-                    et.setSelection(et.getText().length());
-                }
-                return false;
-            }
-        });
+				@Override
+				public boolean onLongClick(View view) {
+					String template = Utils.getPrefs(getApplicationContext()).getString("template", "");
+					if (template.length() > 0) {
+						et.setText(et.getText().toString() + template);
+						et.setSelection(et.getText().length());
+					}
+					return false;
+				}
+			});
 
         et.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                if (et.getText().length() == 0)
-                    btnSend.setColorFilter(Color.GRAY);
-                else
-                    btnSend.setColorFilter(Color.parseColor("#1565c0"));
-            }
+				@Override
+				public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+					if (et.getText().length() == 0)
+						btnSend.setColorFilter(Color.GRAY);
+					else
+						btnSend.setColorFilter(Color.parseColor("#1565c0"));
+				}
 
-            @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                if (et.getText().length() == 0)
-                    btnSend.setColorFilter(Color.GRAY);
-                else
-                    btnSend.setColorFilter(Color.parseColor("#1565c0"));
-            }
+				@Override
+				public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+					if (et.getText().length() == 0)
+						btnSend.setColorFilter(Color.GRAY);
+					else
+						btnSend.setColorFilter(Color.parseColor("#1565c0"));
+				}
 
-            @Override
-            public void afterTextChanged(Editable editable) {
-                if (et.getText().length() == 0)
-                    btnSend.setColorFilter(Color.GRAY);
-                else
-                    btnSend.setColorFilter(Color.parseColor("#1565c0"));
-            }
-        });
+				@Override
+				public void afterTextChanged(Editable editable) {
+					if (et.getText().length() == 0)
+						btnSend.setColorFilter(Color.GRAY);
+					else
+						btnSend.setColorFilter(Color.parseColor("#1565c0"));
+				}
+			});
 
         getSupportActionBar().setTitle(title);
         isLoaded = false;
@@ -148,8 +122,8 @@ public class ChatActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-		if(adapter != null)
-        adapter.destroy();
+		if (adapter != null)
+			adapter.destroy();
         super.onDestroy();
     }
 
@@ -195,14 +169,15 @@ public class ChatActivity extends AppCompatActivity {
         item.setVisible(cid > 0);
         if (isLoaded)
             btnSend.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    if (!TextUtils.isEmpty(et.getText().toString())) {
-                        sendMessage();
-                    } else
-                        Toast.makeText(ChatActivity.this, R.string.type_message_error, Toast.LENGTH_SHORT).show();
-                }
-            });
+					@Override
+					public void onClick(View view) {
+						if (!TextUtils.isEmpty(et.getText().toString())) {
+							sendMessage();
+						}
+						else
+							Toast.makeText(ChatActivity.this, R.string.type_message_error, Toast.LENGTH_SHORT).show();
+					}
+				});
         item.setTitle(isLeaved ? getString(R.string.return_to_chat) : getString(R.string.leave_from_chat));
         return super.onPrepareOptionsMenu(menu);
     }
@@ -217,34 +192,35 @@ public class ChatActivity extends AppCompatActivity {
 
     private void showLeaveDialog(final String action) {
         Snackbar.make((findViewById(R.id.llMessageHistory)), action.equals(getString(R.string.leave_from_chat)) ? getString(R.string.leave_chat_confirm) : getString(R.string.return_chat_confirm), Snackbar.LENGTH_LONG).setAction("Да", new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            if (action.equals(getString(R.string.leave_from_chat))) {
-                                isLeaved = true;
-                                api.removeUserFromChat(cid, account.user_id);
-                            } else {
-                                isLeaved = false;
-                                api.addUserToChat(cid, account.user_id);
-                            }
-                            invalidateOptionsMenu();
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    new ChatGetter(false).execute();
-                                    Toast.makeText(ChatActivity.this, isLeaved ? getString(R.string.you_leaved_chat) : getString(R.string.returned_to_chat), Toast.LENGTH_SHORT).show();
-                                }
-                            });
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }).start();
-            }
-        }).setActionTextColor(Color.parseColor("#1565c0")).show();
+				@Override
+				public void onClick(View view) {
+					new Thread(new Runnable() {
+							@Override
+							public void run() {
+								try {
+									if (action.equals(getString(R.string.leave_from_chat))) {
+										isLeaved = true;
+										api.removeUserFromChat(cid, account.user_id);
+									}
+									else {
+										isLeaved = false;
+										api.addUserToChat(cid, account.user_id);
+									}
+									invalidateOptionsMenu();
+									runOnUiThread(new Runnable() {
+											@Override
+											public void run() {
+												new ChatGetter(false).execute();
+												Toast.makeText(ChatActivity.this, isLeaved ? getString(R.string.you_leaved_chat) : getString(R.string.returned_to_chat), Toast.LENGTH_SHORT).show();
+											}
+										});
+								} catch (Exception e) {
+									e.printStackTrace();
+								}
+							}
+						}).start();
+				}
+			}).setActionTextColor(Color.parseColor("#1565c0")).show();
     }
 
     private void sendMessage() {
@@ -254,34 +230,34 @@ public class ChatActivity extends AppCompatActivity {
 
     private class SendMessage extends AsyncTask<Void, Void, Void> {
 
-        private String text;
-        private VKMessage message = new VKMessage();
-
+		private VKMessage message = new VKMessage();
+		String msg_text = et.getText().toString();
+		
+		
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            text = et.getText().toString();
+            message.body = msg_text;
+            message.uid = account.user_id;
+            message.is_out = true;
+            message.date = System.currentTimeMillis() / 1000;
+            final VKFullUser user = api.getProfile(account.user_id);
+            final ChatItems[] messageItem = new ChatItems[1];
+            messageItem[0] = new ChatItems(message, user);
+            items.add(messageItem[0]);
+            adapter.notifyDataSetChanged();
+            lv.setSelection(adapter.getCount());
         }
 
         @Override
-        protected Void doInBackground(Void... voids) {
+        protected Void doInBackground(Void... params) {
             try {
-                api.sendMessage(uid, cid, text, null, null, null, null, null, null, null, null);
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        message.body = text;
-                        message.uid = account.user_id;
-                        message.date = System.currentTimeMillis() / 1000;
-                        message.is_out = true;
-                        final VKFullUser user = api.getProfile(account.user_id);
-                        final VKMessage[] messageItem = new VKMessage[1];
-                        messageItem[0] = message;
-                        items.add(messageItem[0]);
-                        adapter.notifyDataSetChanged();
-                        lv.setSelection(adapter.getCount());
-                    }
-                });
+                message.mid = api.sendMessage(uid, cid, msg_text, null, null, null, null, null, null, null, null);
+                final VKFullUser user = api.getProfile(account.user_id);
+                final ChatItems[] messageItem = new ChatItems[1];
+                messageItem[1] = new ChatItems(message, user);
+                items.add(messageItem[1]);
+                adapter.notifyDataSetChanged();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -289,16 +265,17 @@ public class ChatActivity extends AppCompatActivity {
         }
 
         @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
+        protected void onPostExecute(Void result) {
+            super.onPostExecute(result);
             adapter.notifyDataSetChanged();
-            lv.smoothScrollToPosition(adapter.getCount());
+            lv.setSelection(adapter.getCount());
+
         }
     }
 
     private class ChatGetter extends AsyncTask<Void, Void, Void> {
 		public boolean withProgress;
-		
+
 		public ChatGetter(boolean withProgress) {
 			this.withProgress = withProgress;
 		}
@@ -331,30 +308,30 @@ public class ChatActivity extends AppCompatActivity {
 
                 for (VKMessage msg : dialogs) {
                     VKFullUser user = mapUsers.get(msg.uid);
-                    items.add(0, msg);
+                    items.add(0, new ChatItems(msg, user));
                 }
 
                 if (cid > 0)
                     chat = api.getChat(cid);
                 runOnUiThread(new Runnable() {
 
-                    @Override
-                    public void run() {
-                        isLoaded = true;
-                        invalidateOptionsMenu();
-                        adapter = new ChatAdapter(getApplicationContext(), items, api, cid, uid, lv);
-                        lv.setAdapter(adapter);
-                        lv.setSelection(adapter.getCount());
-                        if (cid > 0)
-                            toolbar.setOnClickListener(new View.OnClickListener() {
-                                @Override
-                                public void onClick(View view) {
-                                    openChatInfo();
-                                }
-                            });
-                    }
+						@Override
+						public void run() {
+							isLoaded = true;
+							invalidateOptionsMenu();
+							adapter = new ChatAdapter(getApplicationContext(), items, api, cid, uid, lv);
+							lv.setAdapter(adapter);
+							lv.setSelection(adapter.getCount());
+							if (cid > 0)
+								toolbar.setOnClickListener(new View.OnClickListener() {
+										@Override
+										public void onClick(View view) {
+											openChatInfo();
+										}
+									});
+						}
 
-                });
+					});
             } catch (Exception e) {
                 e.printStackTrace();
             }

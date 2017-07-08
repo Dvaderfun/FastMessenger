@@ -6,6 +6,7 @@
 	<PreferenceScreen
 		android:key="check_updates"
 		android:title="Updates"
+		android:enabled="false"
 		android:summary="Check updates" />
 	
 	<PreferenceCategory android:title="Design" />

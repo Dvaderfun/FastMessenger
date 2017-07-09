@@ -12,7 +12,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 
-import ru.lischenko_dev.fastmessenger.util.Account;
+import ru.lischenko_dev.fastmessenger.common.Account;
 import ru.lischenko_dev.fastmessenger.util.Utils;
 import ru.lischenko_dev.fastmessenger.vkapi.Api;
 import ru.lischenko_dev.fastmessenger.vkapi.KException;
@@ -20,15 +20,15 @@ import ru.lischenko_dev.fastmessenger.vkapi.models.VKMessage;
 
 public class LongPollService extends Service {
 
+    public static final String TAG = "VKLongPollService";
     public boolean isRunning;
     private Thread updateThread;
-    public static final String TAG = "VKLongPollService";
     private String key;
     private String server;
     private Long ts;
     private Object[] pollServer;
 
-    private Account account = new Account();
+    private Account account;
     private Api api;
 
     public LongPollService() {
@@ -38,7 +38,7 @@ public class LongPollService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        account.restore(this);
+        account = Account.get(this);
         Log.d(TAG, "Created");
         api = Api.init(account);
         isRunning = true;

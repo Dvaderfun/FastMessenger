@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -19,6 +20,7 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
@@ -26,12 +28,9 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
-import ru.lischenko_dev.fastmessenger.common.OTAManager;
-import ru.lischenko_dev.fastmessenger.fragment.FragmentFriends;
-import ru.lischenko_dev.fastmessenger.fragment.FragmentMessages;
+import ru.lischenko_dev.fastmessenger.common.Account;
+import ru.lischenko_dev.fastmessenger.common.ThemeManager;
 import ru.lischenko_dev.fastmessenger.service.LongPollService;
-import ru.lischenko_dev.fastmessenger.util.Account;
-import ru.lischenko_dev.fastmessenger.util.ThemeManager;
 import ru.lischenko_dev.fastmessenger.util.Utils;
 
 
@@ -39,21 +38,24 @@ public class MainActivity extends AppCompatActivity {
 
     public static final int REQUEST_LOGIN = 1;
     public static final int REQUEST_PERMISSIONS = 2;
-
-    private Account account = new Account();
-
+    public NavigationView navigationView;
+    private Account account;
     private Toolbar toolbar;
     private DrawerLayout drawerLayout;
-    public NavigationView navigationView;
+
+    public Toolbar getToolbar() {
+        return toolbar;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setTheme(ThemeManager.get(this).getCurrentTheme());
         super.onCreate(savedInstanceState);
+        account = Account.get(this);
         setContentView(R.layout.activity_main);
 
         initItems();
-        account.restore(this);
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             getWindow().setStatusBarColor(0x00000000);
             getWindow().setNavigationBarColor(ThemeManager.get(this).getPrimaryColor());
@@ -70,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
             navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
 
                 @Override
-                public boolean onNavigationItemSelected(MenuItem p1) {
+                public boolean onNavigationItemSelected(@NonNull MenuItem p1) {
                     int id = p1.getItemId();
                     if (id != R.id.nav_account_exit & id != R.id.nav_settings)
                         p1.setChecked(true);
@@ -101,23 +103,48 @@ public class MainActivity extends AppCompatActivity {
 
     private void requestPermissionsForWrite() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
-            Snackbar.make(drawerLayout, "Storage permission is needed to download OTA files", 4000).setAction("Grant", new View.OnClickListener() {
+            Snackbar.make(drawerLayout, R.string.need_permissions_message, 10000).setAction(R.string.grant_permissions, new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, MainActivity.REQUEST_PERMISSIONS);
                 }
             }).show();
-        else OTAManager.get(this).checkOTAUpdates();
+        //OTAManager.get(this).checkOTAUpdates();
 
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        if (getSupportFragmentManager().findFragmentByTag("chat") != null) {
+            MenuItem materials = menu.add(R.string.activity_materials_title);
+            MenuItem update = menu.add(R.string.update);
+
+            update.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+                @Override
+                public boolean onMenuItemClick(MenuItem menuItem) {
+                    ((FragmentChat) getSupportFragmentManager().findFragmentByTag("chat")).update();
+                    return false;
+                }
+            });
+            materials.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+                @Override
+                public boolean onMenuItemClick(MenuItem menuItem) {
+                    startActivity(new Intent(getApplicationContext(), MaterialsActivity.class).putExtra("cid", ((FragmentChat) getSupportFragmentManager().findFragmentByTag("chat")).getCid()).putExtra("uid", ((FragmentChat) getSupportFragmentManager().findFragmentByTag("chat")).getUid()));
+                    return false;
+                }
+            });
+        } else
+            return false;
+        return super.onCreateOptionsMenu(menu);
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == MainActivity.REQUEST_PERMISSIONS) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
-                OTAManager.get(MainActivity.this).checkOTAUpdates();
+                return;//OTAManager.get(MainActivity.this).checkOTAUpdates();
             else
-                Snackbar.make(drawerLayout, "OTA Cant work without storage permission!", 4000).setAction("Grant", new View.OnClickListener() {
+                Snackbar.make(drawerLayout, R.string.cant_work_without_permissions, 10000).setAction(R.string.grant_permissions, new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
                         ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, MainActivity.REQUEST_PERMISSIONS);
@@ -134,8 +161,8 @@ public class MainActivity extends AppCompatActivity {
         adb.setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-                account.clear(getApplicationContext());
-                ActivityCompat.finishAffinity(MainActivity.this);
+                account.clear();
+                finishAffinity();
             }
         });
         adb.setNegativeButton(R.string.no, null);
@@ -147,6 +174,7 @@ public class MainActivity extends AppCompatActivity {
         Picasso.with(this).load(account.getAvatar()).into(((ImageView) v.findViewById(R.id.ivAva)));
         ((TextView) v.findViewById(R.id.tvName)).setText(account.getName());
         ((TextView) v.findViewById(R.id.tvStatus)).setText(account.getStatus());
+        v.findViewById(R.id.ivMusic).setVisibility(account.isMusicPlaying() ? View.VISIBLE : View.GONE);
     }
 
     @Override
@@ -174,7 +202,8 @@ public class MainActivity extends AppCompatActivity {
     public void onBackPressed() {
         if (getSupportFragmentManager().findFragmentByTag("chat") != null) {
             getSupportFragmentManager().beginTransaction().replace(R.id.container, navigationView.getMenu().getItem(0).isChecked() ? new FragmentMessages() : new FragmentFriends()).commit();
-
+            invalidateOptionsMenu();
+            toolbar.getOverflowIcon().setColorFilter(Color.WHITE, PorterDuff.Mode.MULTIPLY);
         } else {
             if (drawerLayout.isDrawerOpen(GravityCompat.START))
                 drawerLayout.closeDrawers();

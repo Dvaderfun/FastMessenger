@@ -11,7 +11,6 @@ import android.net.Uri;
 import android.os.Environment;
 import android.util.Log;
 import android.view.View;
-import android.widget.TextView;
 
 import org.json.JSONObject;
 
@@ -32,9 +31,16 @@ public class OTAManager {
 
     private String download_url = "http://advteam.3dn.ru/fastmessenger/";
     private String newVersion = null;
-    private String path_external = "Android/data/ru.lischenko_dev.fastmessenger/";
 
     private DownloadManager manager;
+
+    public OTAManager(Context c) {
+        this.context = c;
+    }
+
+    public static OTAManager get(Context c) {
+        return new OTAManager(c);
+    }
 
     public void checkOTAUpdates() {
         new Thread(new Runnable() {
@@ -68,10 +74,9 @@ public class OTAManager {
         request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE | DownloadManager.Request.NETWORK_WIFI);
         request.setAllowedOverRoaming(false);
         request.setVisibleInDownloadsUi(true);
-        request.setTitle("Downloading...");
+        request.setTitle(context.getString(R.string.downloading));
         request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
         request.setShowRunningNotification(true);
-        request.setDescription("Fast Messenger v." + newVersion);
         request.setDestinationInExternalFilesDir(context, Environment.DIRECTORY_DOWNLOADS, newVersion + ".apk");
         downloadRef = manager.enqueue(request);
         receiver = new BroadcastReceiver() {
@@ -80,29 +85,13 @@ public class OTAManager {
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
-                            try {
 
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                                Log.e("Error OTA", e.toString());
-                            }
                         }
 
                     }).start();
                 }
 
             }
-/*
-                Intent i = new Intent();
-                i.setAction(Intent.ACTION_VIEW);
-                i.setDataAndType(Uri.parse(Uri.fromFile(new File(Environment.getExternalStorageDirectory() + "/Android/data/ru.lischenko_dev.fastmessenger/" + newVersion + ".apk")).toString()), "application/vnd.android.package-archive");
-
-                try {
-                    context.startActivity(i);
-                } catch (ActivityNotFoundException e) {
-                    Toast.makeText(context, "No handler for this type of file.", Toast.LENGTH_LONG).show();
-                }*/
-
         };
         context.registerReceiver(receiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
     }
@@ -126,18 +115,10 @@ public class OTAManager {
             }
         });
 
-        ((TextView) v.findViewById(R.id.tvChangelog)).setText("Version: " + newVersion);
-        ((TextView) v.findViewById(R.id.tvTitle)).setText("New OTA Version!");
+        // ((TextView) v.findViewById(R.id.tvChangelog)).setText("Version: " + newVersion);
+        //((TextView) v.findViewById(R.id.tvTitle)).setText("New OTA Version!");
         dialog.setContentView(v);
         dialog.setCancelable(true);
         dialog.show();
-    }
-
-    public static OTAManager get(Context c) {
-        return new OTAManager(c);
-    }
-
-    public OTAManager(Context c) {
-        this.context = c;
     }
 }

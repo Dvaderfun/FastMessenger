@@ -9,25 +9,24 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
 
-import ru.lischenko_dev.fastmessenger.adapter.MaterialsAdapter;
-import ru.lischenko_dev.fastmessenger.fragment.material.FragmentAudio;
-import ru.lischenko_dev.fastmessenger.fragment.material.FragmentDocuments;
-import ru.lischenko_dev.fastmessenger.fragment.material.FragmentPhoto;
-import ru.lischenko_dev.fastmessenger.fragment.material.FragmentVideo;
+import ru.lischenko_dev.fastmessenger.adapter.MaterialsPagerAdapter;
+import ru.lischenko_dev.fastmessenger.common.ThemeManager;
 
 
 public class MaterialsActivity extends AppCompatActivity {
 
-    Toolbar toolbar;
-    TabLayout tabLayout;
-    ViewPager viewPager;
-    long uid, cid;
+    private Toolbar toolbar;
+    private TabLayout tabLayout;
+    private ViewPager viewPager;
+    private long uid, cid;
+    private ThemeManager manager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        manager = ThemeManager.get(this);
+        setTheme(manager.getCurrentTheme());
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_materials);
-
 
         uid = getIntent().getExtras().getLong("uid");
         cid = getIntent().getExtras().getLong("cid");
@@ -44,11 +43,11 @@ public class MaterialsActivity extends AppCompatActivity {
     }
 
     private void setupViewPager(ViewPager viewPager) {
-        MaterialsAdapter adapter = new MaterialsAdapter(getSupportFragmentManager());
-        adapter.addFragment(new FragmentPhoto(), getString(R.string.materials_photo));
-        adapter.addFragment(new FragmentAudio(), getString(R.string.materials_audio));
-        adapter.addFragment(new FragmentVideo(), getString(R.string.materials_video));
-        adapter.addFragment(new FragmentDocuments(), getString(R.string.materials_doc));
+        MaterialsPagerAdapter adapter = new MaterialsPagerAdapter(getSupportFragmentManager());
+        adapter.addFragment(new FragmentMaterialsPhoto(), getString(R.string.materials_photo));
+        adapter.addFragment(new FragmentMaterialsAudio(), getString(R.string.materials_audio));
+        adapter.addFragment(new FragmentMaterialsVideo(), getString(R.string.materials_video));
+        adapter.addFragment(new FragmentMaterialsDocuments(), getString(R.string.materials_doc));
         viewPager.setAdapter(adapter);
     }
 

@@ -1,40 +1,11 @@
 package ru.lischenko_dev.fastmessenger.adapter;
 
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentStatePagerAdapter;
+import ru.lischenko_dev.fastmessenger.vkapi.models.VKMessageAttachment;
 
-import java.util.ArrayList;
-import java.util.List;
+public class MaterialsAdapter {
+    public VKMessageAttachment attachment;
 
-public class MaterialsAdapter extends FragmentStatePagerAdapter {
-
-
-    private final List<Fragment> mFragmentList = new ArrayList<>();
-    private final List<String> mFragmentTitleList = new ArrayList<>();
-
-    public MaterialsAdapter(FragmentManager fm) {
-        super(fm);
+    public MaterialsAdapter(VKMessageAttachment attachment) {
+        this.attachment = attachment;
     }
-
-    @Override
-    public Fragment getItem(int position) {
-        return mFragmentList.get(position);
-    }
-
-    @Override
-    public int getCount() {
-        return mFragmentList.size();
-    }
-
-    @Override
-    public CharSequence getPageTitle(int position) {
-        return mFragmentTitleList.get(position);
-    }
-
-    public void addFragment(Fragment fragment, String title) {
-        mFragmentList.add(fragment);
-        mFragmentTitleList.add(title);
-    }
-
 }

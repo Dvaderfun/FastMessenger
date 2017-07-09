@@ -1,5 +1,6 @@
-package ru.lischenko_dev.fastmessenger.fragment;
+package ru.lischenko_dev.fastmessenger;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.drawable.ColorDrawable;
@@ -9,25 +10,24 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.AppCompatEditText;
 import android.support.v7.widget.AppCompatImageButton;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AbsListView;
-import android.widget.ListView;
 import android.widget.ProgressBar;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import ru.lischenko_dev.fastmessenger.MainActivity;
-import ru.lischenko_dev.fastmessenger.R;
-import ru.lischenko_dev.fastmessenger.adapter.ChatAdapter;
 import ru.lischenko_dev.fastmessenger.adapter.ChatItems;
-import ru.lischenko_dev.fastmessenger.util.Account;
-import ru.lischenko_dev.fastmessenger.util.ThemeManager;
+import ru.lischenko_dev.fastmessenger.adapter.MessagesHistoryAdapter;
+import ru.lischenko_dev.fastmessenger.common.Account;
+import ru.lischenko_dev.fastmessenger.common.ThemeManager;
 import ru.lischenko_dev.fastmessenger.util.Utils;
 import ru.lischenko_dev.fastmessenger.vkapi.Api;
 import ru.lischenko_dev.fastmessenger.vkapi.models.VKFullUser;
@@ -35,20 +35,16 @@ import ru.lischenko_dev.fastmessenger.vkapi.models.VKMessage;
 
 public class FragmentChat extends Fragment {
 
-    private Account account = new Account();
+    public long uid, cid;
+    private Account account;
     private Api api;
-
     private ArrayList<ChatItems> items;
-    private ChatAdapter adapter;
-
-    private ListView lv;
+    private MessagesHistoryAdapter adapter;
+    private RecyclerView recyclerView;
     private AppCompatImageButton btnSend, btnSmile;
     private AppCompatEditText et;
     private ProgressBar progress;
-
-    private long uid, cid;
     private String title;
-
 
     private ThemeManager manager;
     private View rootView;
@@ -57,27 +53,30 @@ public class FragmentChat extends Fragment {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        initExtraItems();
+
         rootView = inflater.inflate(R.layout.fragment_chat, container, false);
         manager = ThemeManager.get(getActivity());
+
+        getActivity().invalidateOptionsMenu();
         getActivity().getWindow().setBackgroundDrawable(new ColorDrawable(manager.getSecondaryBackgroundColor()));
         (rootView.findViewById(R.id.chat_panel)).getBackground().setColorFilter(manager.getPanelColor(), PorterDuff.Mode.MULTIPLY);
-        account.restore(getActivity());
+        account = Account.get(getActivity());
         api = Api.init(account);
 
-        initExtraItems();
+
         initItems(rootView);
         et.setHintTextColor(manager.getEditTextColor());
         et.setTextColor(manager.getEditTextColor());
-        lv.setStackFromBottom(true);
 
-        View listViewFooter = new View(getActivity());
-        listViewFooter.setBackgroundColor(Color.TRANSPARENT);
-        listViewFooter.setVisibility(View.INVISIBLE);
-        listViewFooter.setEnabled(false);
-        listViewFooter.setClickable(false);
-        listViewFooter.setLayoutParams(new AbsListView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, (int) Utils.convertDpToPixel(getActivity(), 61)));
 
-        lv.addFooterView(listViewFooter);
+        LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
+        layoutManager.setStackFromEnd(true);
+        recyclerView = rootView.findViewById(R.id.lv);
+        recyclerView.setLayoutManager(layoutManager);
+        recyclerView.setHasFixedSize(false);
+
+        recyclerView.setItemAnimator(new DefaultItemAnimator());
         btnSend.setColorFilter(Color.GRAY);
 
         btnSmile.setOnLongClickListener(new View.OnLongClickListener() {
@@ -119,6 +118,7 @@ public class FragmentChat extends Fragment {
         });
 
         ((MainActivity) getActivity()).getSupportActionBar().setTitle(title);
+
         new ChatGetter(true).execute();
 
         btnSend.setOnClickListener(new View.OnClickListener() {
@@ -130,10 +130,20 @@ public class FragmentChat extends Fragment {
         return rootView;
     }
 
+    public Long getCid() {
+        return cid;
+    }
+
+    public Long getUid() {
+        return uid;
+    }
+
+    public void update() {
+        new ChatGetter(true).execute();
+    }
+
     @Override
     public void onDetach() {
-        if (adapter != null)
-            adapter.destroy();
         super.onDetach();
     }
 
@@ -143,11 +153,25 @@ public class FragmentChat extends Fragment {
         et.setText(null);
     }
 
+    private void initExtraItems() {
+        Bundle b = getArguments();
+        uid = b.getLong("uid");
+        cid = b.getLong("cid");
+        title = b.getString("title");
+    }
+
+    private void initItems(View v) {
+        progress = v.findViewById(R.id.progress);
+        recyclerView = v.findViewById(R.id.lv);
+        et = v.findViewById(R.id.et);
+        btnSend = v.findViewById(R.id.btnSend);
+        btnSmile = v.findViewById(R.id.btnSmile);
+    }
+
     private class SendMessage extends AsyncTask<Void, Void, Void> {
 
-        private VKMessage message = new VKMessage();
         String msg_text = et.getText().toString();
-
+        private VKMessage message = new VKMessage();
 
         @Override
         protected void onPreExecute() {
@@ -161,7 +185,7 @@ public class FragmentChat extends Fragment {
             messageItem[0] = new ChatItems(message, user);
             items.add(messageItem[0]);
             adapter.notifyDataSetChanged();
-            lv.setSelection(adapter.getCount());
+            recyclerView.smoothScrollToPosition(adapter.getItemCount());
         }
 
         @Override
@@ -173,6 +197,7 @@ public class FragmentChat extends Fragment {
                 messageItem[1] = new ChatItems(message, user);
                 items.add(messageItem[1]);
                 adapter.notifyDataSetChanged();
+                recyclerView.smoothScrollToPosition(adapter.getItemCount());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -183,15 +208,15 @@ public class FragmentChat extends Fragment {
         protected void onPostExecute(Void result) {
             super.onPostExecute(result);
             adapter.notifyDataSetChanged();
-            lv.setSelection(adapter.getCount());
+            recyclerView.smoothScrollToPosition(adapter.getItemCount());
 
         }
     }
 
     private class ChatGetter extends AsyncTask<Void, Void, Void> {
-        public boolean withProgress;
+        boolean withProgress;
 
-        public ChatGetter(boolean withProgress) {
+        ChatGetter(boolean withProgress) {
             this.withProgress = withProgress;
         }
 
@@ -199,7 +224,7 @@ public class FragmentChat extends Fragment {
         protected void onPreExecute() {
             super.onPreExecute();
             if (withProgress) {
-                lv.setVisibility(View.INVISIBLE);
+                recyclerView.setVisibility(View.INVISIBLE);
                 progress.setVisibility(View.VISIBLE);
             }
         }
@@ -224,19 +249,23 @@ public class FragmentChat extends Fragment {
                     VKFullUser user = mapUsers.get(msg.uid);
                     items.add(0, new ChatItems(msg, user));
                 }
+                getActivity().runOnUiThread(new Runnable() {
 
-                if (cid > 0)
+                    @Override
+                    public void run() {
+                        adapter = new MessagesHistoryAdapter(items, getActivity().getApplicationContext());
+                        recyclerView.setAdapter(adapter);
+                        recyclerView.scrollToPosition(adapter.getItemCount());
+                        if (cid > 0)
+                            ((MainActivity) getActivity()).getToolbar().setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View view) {
+                                    startActivity(new Intent(getActivity(), ChatInfoActivity.class).putExtra("cid", cid).putExtra("title", title));
+                                }
+                            });
+                    }
 
-                    getActivity().runOnUiThread(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            adapter = new ChatAdapter(getActivity().getApplicationContext(), items, api, cid, uid, lv, getActivity());
-                            lv.setAdapter(adapter);
-                            lv.setSelection(adapter.getCount());
-                        }
-
-                    });
+                });
             } catch (Exception e) {
                 e.printStackTrace();
                 Log.e("Some error in chat get", e.toString());
@@ -248,25 +277,9 @@ public class FragmentChat extends Fragment {
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
             if (withProgress) {
-                lv.setVisibility(View.VISIBLE);
+                recyclerView.setVisibility(View.VISIBLE);
                 progress.setVisibility(View.GONE);
             }
         }
-    }
-
-    private void initExtraItems() {
-        Bundle b = getArguments();
-        uid = b.getLong("uid");
-        cid = b.getLong("cid");
-        title = b.getString("title");
-    }
-
-
-    private void initItems(View v) {
-        progress = v.findViewById(R.id.progress);
-        lv = v.findViewById(R.id.lv);
-        et = v.findViewById(R.id.et);
-        btnSend = v.findViewById(R.id.btnSend);
-        btnSmile = v.findViewById(R.id.btnSmile);
     }
 }

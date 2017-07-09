@@ -10,16 +10,19 @@ import android.widget.TextView;
 import java.util.ArrayList;
 
 import ru.lischenko_dev.fastmessenger.R;
+import ru.lischenko_dev.fastmessenger.common.ThemeManager;
 
-public class AudioMaterialAdapter extends BaseAdapter {
+public class MaterialsAudioAdapter extends BaseAdapter {
 
-    Context context;
-    ArrayList<AudioMaterialItems> items;
-    LayoutInflater inflater;
+    private Context context;
+    private ArrayList<MaterialsAdapter> items;
+    private LayoutInflater inflater;
+    private ThemeManager manager;
 
-    public AudioMaterialAdapter(Context context, ArrayList<AudioMaterialItems> items) {
+    public MaterialsAudioAdapter(Context context, ArrayList<MaterialsAdapter> items) {
         this.context = context;
         this.items = items;
+        this.manager = ThemeManager.get(context);
         this.inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
 
@@ -40,14 +43,18 @@ public class AudioMaterialAdapter extends BaseAdapter {
 
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
+        MaterialsAdapter item = (MaterialsAdapter) getItem(i);
         View v = view;
         if (v == null) {
             v = inflater.inflate(R.layout.materials_audio_list, viewGroup, false);
         }
-        AudioMaterialItems item = (AudioMaterialItems) getItem(i);
 
-        TextView tvTitle = (TextView) v.findViewById(R.id.tvTitle);
-        TextView tvArtist = (TextView) v.findViewById(R.id.tvArtist);
+
+        TextView tvTitle = v.findViewById(R.id.tvTitle);
+        TextView tvArtist = v.findViewById(R.id.tvArtist);
+
+        tvTitle.setTextColor(manager.getPrimaryTextColor());
+        tvArtist.setTextColor(manager.getSecondaryTextColor());
 
         tvTitle.setText(item.attachment.audio.title);
         tvArtist.setText(item.attachment.audio.artist);

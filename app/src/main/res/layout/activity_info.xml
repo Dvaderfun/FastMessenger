@@ -31,7 +31,6 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:background="#ffffff"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingLeft="6dp"
@@ -60,13 +59,13 @@
 
 
     <View
+        android:id="@+id/hr"
         android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#ccc" />
+        android:layout_height="1dp" />
 
-    <ListView
+    <android.support.v7.widget.RecyclerView
         android:id="@+id/lv"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:dividerHeight="-1dp" />
+        android:scrollbars="vertical" />
 </LinearLayout>

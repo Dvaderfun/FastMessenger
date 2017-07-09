@@ -17,9 +17,8 @@ import java.util.Collection;
 import java.util.Locale;
 import java.util.zip.GZIPInputStream;
 
-import ru.lischenko_dev.fastmessenger.util.Account;
+import ru.lischenko_dev.fastmessenger.common.Account;
 import ru.lischenko_dev.fastmessenger.util.Constants;
-import ru.lischenko_dev.fastmessenger.util.VKAccount;
 import ru.lischenko_dev.fastmessenger.vkapi.models.AudioAlbum;
 import ru.lischenko_dev.fastmessenger.vkapi.models.BannArg;
 import ru.lischenko_dev.fastmessenger.vkapi.models.City;
@@ -54,23 +53,19 @@ import ru.lischenko_dev.fastmessenger.vkapi.models.VKVideo;
 import ru.lischenko_dev.fastmessenger.vkapi.models.VKWallMessage;
 
 public class Api {
-    static final String TAG = "Kate.Api";
-
-    private static Api mSingleton;
     public static final String BASE_URL = "https://api.vk.com/method/";
     public static final String API_VERSION = "5.14";
+    static final String TAG = "Kate.Api";
+    private final static int MAX_TRIES = 3;
+    //TODO: it's not faster, even slower on slow devices. Maybe we should add an option to disable it. It's only good for paid internet connection.
+    static boolean enable_compression = true;
+    private static Api mSingleton;
     String language = Locale.getDefault().getLanguage();
-
+    String access_token;
+    String api_id;
+    private Account account;
     public Api(String access_token, String api_id) {
         this.access_token = access_token;
-        this.api_id = api_id;
-    }
-
-    public void setAccessToken(String access_token) {
-        this.access_token = access_token;
-    }
-
-    public void setApiId(String api_id) {
         this.api_id = api_id;
     }
 
@@ -122,24 +117,7 @@ public class Api {
         return "приложение";
     }
 
-    String access_token;
-    String api_id;
-    private Account account;
-    //TODO: it's not faster, even slower on slow devices. Maybe we should add an option to disable it. It's only good for paid internet connection.
-    static boolean enable_compression = true;
-
-    /**
-     * utils methods**
-     */
-    public void setAccount(Account account) {
-        this.account = account;
-    }
-
     public static Api init(Account account) {
-        return new Api(account.access_token, Constants.API_ID);
-    }
-
-    public static Api init(VKAccount account) {
         return new Api(account.access_token, Constants.API_ID);
     }
 
@@ -148,6 +126,108 @@ public class Api {
             mSingleton = new Api(access_token, Constants.API_ID);
         }
         return mSingleton;
+    }
+
+    public static String sendRequestInternal(String url, String body, boolean is_post) throws IOException {
+        HttpURLConnection connection = null;
+        try {
+            connection = (HttpURLConnection) new URL(url).openConnection();
+            connection.setConnectTimeout(30000);
+            connection.setReadTimeout(30000);
+            connection.setUseCaches(false);
+            connection.setDoOutput(is_post);
+            connection.setDoInput(true);
+            connection.setRequestMethod(is_post ? "POST" : "GET");
+            if (enable_compression)
+                connection.setRequestProperty("Accept-Encoding", "gzip");
+            if (is_post)
+                connection.getOutputStream().write(body.getBytes("UTF-8"));
+            int code = connection.getResponseCode();
+            Log.i(TAG, "code=" + code);
+            //It may happen due to keep-alive problem http://stackoverflow.com/questions/1440957/httpurlconnection-getresponsecode-returns-1-on-second-invocation
+            if (code == -1)
+                throw new WrongResponseCodeException("Network error");
+            //может стоит проверить на код 200
+            //on error can also read error stream from connection.
+            InputStream is = new BufferedInputStream(connection.getInputStream(), 8192);
+            String enc = connection.getHeaderField("Content-Encoding");
+            if (enc != null && enc.equalsIgnoreCase("gzip"))
+                is = new GZIPInputStream(is);
+            return VKUtils.convertStreamToString(is);
+        } finally {
+            if (connection != null)
+                connection.disconnect();
+        }
+    }
+
+    public static String unescape(String text) {
+        if (text == null)
+            return null;
+        return text.replace("&amp;", "&").replace("&quot;", "\"").replace("<br>", "\n").replace("&gt;", ">").replace("&lt;", "<")
+                .replace("<br/>", "\n").replace("&ndash;", "-").trim();
+        //Баг в API
+        //amp встречается в сообщении, br в Ответах тип comment_photo, gt lt на стене - баг API, ndash в статусе когда аудио транслируется
+        //quot в тексте сообщения из LongPoll - то есть в уведомлении
+    }
+
+    public static String unescapeWithSmiles(String text) {
+        return unescape(text)
+                //May be useful to someone
+                //.replace("\uD83D\uDE0A", ":-)")
+                //.replace("\uD83D\uDE03", ":D")
+                //.replace("\uD83D\uDE09", ";-)")
+                //.replace("\uD83D\uDE06", "xD")
+                //.replace("\uD83D\uDE1C", ";P")
+                //.replace("\uD83D\uDE0B", ":p")
+                //.replace("\uD83D\uDE0D", "8)")
+                //.replace("\uD83D\uDE0E", "B)")
+                //
+                //.replace("\ud83d\ude12", ":(")  //F0 9F 98 92
+                //.replace("\ud83d\ude0f", ":]")  //F0 9F 98 8F
+                //.replace("\ud83d\ude14", "3(")  //F0 9F 98 94
+                //.replace("\ud83d\ude22", ":'(")  //F0 9F 98 A2
+                //.replace("\ud83d\ude2d", ":_(")  //F0 9F 98 AD
+                //.replace("\ud83d\ude29", ":((")  //F0 9F 98 A9
+                //.replace("\ud83d\ude28", ":o")  //F0 9F 98 A8
+                //.replace("\ud83d\ude10", ":|")  //F0 9F 98 90
+                //
+                //.replace("\ud83d\ude0c", "3)")  //F0 9F 98 8C
+                //.replace("\ud83d\ude20", ">(")  //F0 9F 98 A0
+                //.replace("\ud83d\ude21", ">((")  //F0 9F 98 A1
+                //.replace("\ud83d\ude07", "O:)")  //F0 9F 98 87
+                //.replace("\ud83d\ude30", ";o")  //F0 9F 98 B0
+                //.replace("\ud83d\ude32", "8o")  //F0 9F 98 B2
+                //.replace("\ud83d\ude33", "8|")  //F0 9F 98 B3
+                //.replace("\ud83d\ude37", ":X")  //F0 9F 98 B7
+                //
+                //.replace("\ud83d\ude1a", ":*")  //F0 9F 98 9A
+                //.replace("\ud83d\ude08", "}:)")  //F0 9F 98 88
+                //.replace("\u2764", "<3")  //E2 9D A4
+                //.replace("\ud83d\udc4d", ":like:")  //F0 9F 91 8D
+                //.replace("\ud83d\udc4e", ":dislike:")  //F0 9F 91 8E
+                //.replace("\u261d", ":up:")  //E2 98 9D
+                //.replace("\u270c", ":v:")  //E2 9C 8C
+                //.replace("\ud83d\udc4c", ":ok:")  //F0 9F 91 8C
+                ;
+    }
+
+    public static Api get() {
+        return mSingleton;
+    }
+
+    public void setAccessToken(String access_token) {
+        this.access_token = access_token;
+    }
+
+    public void setApiId(String api_id) {
+        this.api_id = api_id;
+    }
+
+    /**
+     * utils methods**
+     */
+    public void setAccount(Account account) {
+        this.account = account;
     }
 
     private void checkError(JSONObject root, String url) throws JSONException, KException {
@@ -187,8 +267,6 @@ public class Api {
         return sendRequest(params, false);
     }
 
-    private final static int MAX_TRIES = 3;
-
     public boolean isChatUser(long uid, long cid) throws JSONException, IOException, KException {
         ArrayList<VKFullUser> apiChat = getChatUsers(cid, "");
         for (VKFullUser user : apiChat) {
@@ -196,7 +274,6 @@ public class Api {
         }
         return false;
     }
-
 
     private JSONObject sendRequest(VKParams params, boolean is_post) throws IOException, JSONException, KException {
         String url = getSignedUrl(params, is_post);
@@ -223,43 +300,10 @@ public class Api {
         return root;
     }
 
-
     private void processNetworkException(int i, IOException ex) throws IOException {
         ex.printStackTrace();
         if (i == MAX_TRIES)
             throw ex;
-    }
-
-    public static String sendRequestInternal(String url, String body, boolean is_post) throws IOException {
-        HttpURLConnection connection = null;
-        try {
-            connection = (HttpURLConnection) new URL(url).openConnection();
-            connection.setConnectTimeout(30000);
-            connection.setReadTimeout(30000);
-            connection.setUseCaches(false);
-            connection.setDoOutput(is_post);
-            connection.setDoInput(true);
-            connection.setRequestMethod(is_post ? "POST" : "GET");
-            if (enable_compression)
-                connection.setRequestProperty("Accept-Encoding", "gzip");
-            if (is_post)
-                connection.getOutputStream().write(body.getBytes("UTF-8"));
-            int code = connection.getResponseCode();
-            Log.i(TAG, "code=" + code);
-            //It may happen due to keep-alive problem http://stackoverflow.com/questions/1440957/httpurlconnection-getresponsecode-returns-1-on-second-invocation
-            if (code == -1)
-                throw new WrongResponseCodeException("Network error");
-            //может стоит проверить на код 200
-            //on error can also read error stream from connection.
-            InputStream is = new BufferedInputStream(connection.getInputStream(), 8192);
-            String enc = connection.getHeaderField("Content-Encoding");
-            if (enc != null && enc.equalsIgnoreCase("gzip"))
-                is = new GZIPInputStream(is);
-            return VKUtils.convertStreamToString(is);
-        } finally {
-            if (connection != null)
-                connection.disconnect();
-        }
     }
 
     private String getSignedUrl(VKParams params, boolean is_post) {
@@ -274,57 +318,6 @@ public class Api {
             args = params.getParamsString();
 
         return BASE_URL + params.method_name + "?" + args;
-    }
-
-    public static String unescape(String text) {
-        if (text == null)
-            return null;
-        return text.replace("&amp;", "&").replace("&quot;", "\"").replace("<br>", "\n").replace("&gt;", ">").replace("&lt;", "<")
-                .replace("<br/>", "\n").replace("&ndash;", "-").trim();
-        //Баг в API
-        //amp встречается в сообщении, br в Ответах тип comment_photo, gt lt на стене - баг API, ndash в статусе когда аудио транслируется
-        //quot в тексте сообщения из LongPoll - то есть в уведомлении
-    }
-
-    public static String unescapeWithSmiles(String text) {
-        return unescape(text)
-                //May be useful to someone
-                //.replace("\uD83D\uDE0A", ":-)")
-                //.replace("\uD83D\uDE03", ":D")
-                //.replace("\uD83D\uDE09", ";-)")
-                //.replace("\uD83D\uDE06", "xD")
-                //.replace("\uD83D\uDE1C", ";P")
-                //.replace("\uD83D\uDE0B", ":p")
-                //.replace("\uD83D\uDE0D", "8)")
-                //.replace("\uD83D\uDE0E", "B)")
-                //
-                //.replace("\ud83d\ude12", ":(")  //F0 9F 98 92
-                //.replace("\ud83d\ude0f", ":]")  //F0 9F 98 8F
-                //.replace("\ud83d\ude14", "3(")  //F0 9F 98 94
-                //.replace("\ud83d\ude22", ":'(")  //F0 9F 98 A2
-                //.replace("\ud83d\ude2d", ":_(")  //F0 9F 98 AD
-                //.replace("\ud83d\ude29", ":((")  //F0 9F 98 A9
-                //.replace("\ud83d\ude28", ":o")  //F0 9F 98 A8
-                //.replace("\ud83d\ude10", ":|")  //F0 9F 98 90
-                //                           
-                //.replace("\ud83d\ude0c", "3)")  //F0 9F 98 8C
-                //.replace("\ud83d\ude20", ">(")  //F0 9F 98 A0
-                //.replace("\ud83d\ude21", ">((")  //F0 9F 98 A1
-                //.replace("\ud83d\ude07", "O:)")  //F0 9F 98 87
-                //.replace("\ud83d\ude30", ";o")  //F0 9F 98 B0
-                //.replace("\ud83d\ude32", "8o")  //F0 9F 98 B2
-                //.replace("\ud83d\ude33", "8|")  //F0 9F 98 B3
-                //.replace("\ud83d\ude37", ":X")  //F0 9F 98 B7
-                //                           
-                //.replace("\ud83d\ude1a", ":*")  //F0 9F 98 9A
-                //.replace("\ud83d\ude08", "}:)")  //F0 9F 98 88
-                //.replace("\u2764", "<3")  //E2 9D A4   
-                //.replace("\ud83d\udc4d", ":like:")  //F0 9F 91 8D
-                //.replace("\ud83d\udc4e", ":dislike:")  //F0 9F 91 8E
-                //.replace("\u261d", ":up:")  //E2 98 9D   
-                //.replace("\u270c", ":v:")  //E2 9C 8C   
-                //.replace("\ud83d\udc4c", ":ok:")  //F0 9F 91 8C
-                ;
     }
 
     /**
@@ -347,10 +340,6 @@ public class Api {
             }
         }
         return cities;
-    }
-
-    public static Api get() {
-        return mSingleton;
     }
 
     //http://vk.com/dev/database.getCitiesById
@@ -456,6 +445,20 @@ public class Api {
         JSONObject root = sendRequest(params);
         JSONArray array = root.optJSONArray("response");
         return VKFullUser.parseUsers(array);
+    }
+
+    public VKFullUser getProfile(long user_id, String fields) {
+        try {
+            ArrayList<Long> uids = new ArrayList<>();
+            uids.add(user_id);
+
+            ArrayList<VKFullUser> users = getProfiles(uids, null, fields, null, null, null);
+            return users.get(0);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public VKFullUser getProfile(long user_id) {
@@ -1011,33 +1014,6 @@ public class Api {
         return root.optLong("response");
     }
 
-    public class Indentefiers {
-        /**
-         * Official clients
-         */
-        public static final int ANDROID_OFFICIAL = 2274003;
-        public static final int IPHONE_OFFICIAL = 3140623;
-        public static final int IPAD_OFFICIAL = 3682744;
-        public static final int WP_OFFICIAL = 3502557;
-        public static final int WINDOWS_OFFICIAL = 3697615;
-
-        /**
-         * Unofficial client, mods and messengers
-         */
-        public static final int FAST_MESSENGER = 5462895;
-
-        public static final int KATE_MOBILE = 2685278;
-        public static final int EUPHORIA = 4510232;
-        public static final int LYNT = 3469984;
-        public static final int SWEET = 4856309;
-        public static final int AMBERFOG = 4445970;
-        public static final int PHOENIX = 4994316;
-        public static final int MESSENGER = 4894723;
-        public static final int ZEUS = 4831060;
-        public static final int ROCKET = 4757672;
-        public static final int VK_MD = 4967124;
-    }
-
     //http://vk.com/dev/messages.markAsNew
     //http://vk.com/dev/messages.markAsRead
     @Deprecated
@@ -1253,7 +1229,6 @@ public class Api {
         return NewsFeed.parse(root, false);
     }
 
-
     //http://vk.com/dev/newsfeed.getRecommended
     public NewsFeed getRecommendedNews(Long start_time, long count, Long end_time, Integer offset, String from, Integer max_photos, String captcha_key, String captcha_sid) throws IOException, JSONException, KException {
         VKParams params = new VKParams("newsfeed.getRecommended");
@@ -1380,7 +1355,6 @@ public class Api {
         JSONObject response = root.optJSONObject("response");
         return VKAudio.parse(response);
     }
-
 
     private ArrayList<VKAudio> parseAudioList(JSONArray array) throws JSONException {
         ArrayList<VKAudio> audios = new ArrayList<VKAudio>();
@@ -1648,7 +1622,7 @@ public class Api {
         return cid;
     }
 
-    //http://vk.com/dev/wall.editComment 
+    //http://vk.com/dev/wall.editComment
     public boolean editWallComment(long cid, Long owner_id, String text, Collection<String> attachments, String captcha_key, String captcha_sid) throws IOException, JSONException, KException {
         VKParams params = new VKParams("wall.editComment");
         params.put("comment_id", cid);
@@ -1732,7 +1706,6 @@ public class Api {
             commnets.comments.add(VKComment.parse((JSONObject) array.get(i)));
         return commnets;
     }
-
 
     //deprecated, use http://vk.com/dev/likes.add instead
     @Deprecated
@@ -2025,7 +1998,6 @@ public class Api {
         long note_id = root.getLong("response");
         return note_id;
     }
-
 
     //http://vk.com/dev/account.setOnline
     public void setOnline(String captcha_key, String captcha_sid) {
@@ -2671,7 +2643,6 @@ public class Api {
 
         return groups;
     }
-    /*** end faves  ***/
 
     /**
      * chat methods **
@@ -2689,6 +2660,8 @@ public class Api {
         JSONObject root = sendRequest(params);
         return root.optLong("response");
     }
+
+    /*** end faves  ***/
 
     //http://vk.com/dev/messages.editChat
     public Integer editChat(long chat_id, String title) throws IOException, JSONException, KException {
@@ -2892,7 +2865,6 @@ public class Api {
         ArrayList<AudioAlbum> albums = AudioAlbum.parseAlbums(array);
         return albums;
     }
-
 
     //http://vk.com/dev/wall.edit
     public int editWallPost(long owner_id, long post_id, String text, Collection<String> attachments, String lat, String lon, long place_id, Long publish_date, String captcha_key, String captcha_sid) throws IOException, JSONException, KException {
@@ -3235,7 +3207,7 @@ public class Api {
         return groups;
     }
 
-    //http://vk.com/dev/audio.edit 
+    //http://vk.com/dev/audio.edit
     public Long editAudio(long owner_id, long audio_id, String artist, String title, String text, Integer genre_id, Integer no_search, String captcha_key, String captcha_sid) throws IOException, JSONException, KException {
         VKParams params = new VKParams("audio.edit");
         params.put("owner_id", owner_id);
@@ -3277,6 +3249,33 @@ public class Api {
 
         JSONObject root = sendRequest(params);
         return root.optString("response");
+    }
+
+    public class Indentefiers {
+        /**
+         * Official clients
+         */
+        public static final int ANDROID_OFFICIAL = 2274003;
+        public static final int IPHONE_OFFICIAL = 3140623;
+        public static final int IPAD_OFFICIAL = 3682744;
+        public static final int WP_OFFICIAL = 3502557;
+        public static final int WINDOWS_OFFICIAL = 3697615;
+
+        /**
+         * Unofficial client, mods and messengers
+         */
+        public static final int FAST_MESSENGER = 5462895;
+
+        public static final int KATE_MOBILE = 2685278;
+        public static final int EUPHORIA = 4510232;
+        public static final int LYNT = 3469984;
+        public static final int SWEET = 4856309;
+        public static final int AMBERFOG = 4445970;
+        public static final int PHOENIX = 4994316;
+        public static final int MESSENGER = 4894723;
+        public static final int ZEUS = 4831060;
+        public static final int ROCKET = 4757672;
+        public static final int VK_MD = 4967124;
     }
 
 

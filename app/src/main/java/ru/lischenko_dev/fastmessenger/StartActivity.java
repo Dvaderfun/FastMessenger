@@ -1,20 +1,27 @@
 package ru.lischenko_dev.fastmessenger;
 
-import android.content.*;
-import android.os.*;
-import android.support.v4.app.*;
-import android.support.v7.app.*;
-import android.view.*;
-import android.widget.*;
-import com.squareup.picasso.*;
-import java.util.*;
-import ru.lischenko_dev.fastmessenger.util.*;
-import ru.lischenko_dev.fastmessenger.vkapi.*;
-import ru.lischenko_dev.fastmessenger.vkapi.models.*;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.GradientDrawable;
+import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
 
+import com.squareup.picasso.Picasso;
+
+import java.util.ArrayList;
+
+import ru.lischenko_dev.fastmessenger.common.Account;
+import ru.lischenko_dev.fastmessenger.common.ThemeManager;
 import ru.lischenko_dev.fastmessenger.util.Utils;
-import android.graphics.drawable.*;
-import android.graphics.*;
+import ru.lischenko_dev.fastmessenger.vkapi.Api;
+import ru.lischenko_dev.fastmessenger.vkapi.models.VKFullUser;
+import ru.lischenko_dev.fastmessenger.vkapi.models.VKStatus;
 
 
 public class StartActivity extends AppCompatActivity {
@@ -24,33 +31,32 @@ public class StartActivity extends AppCompatActivity {
 
     private ImageView ivAva;
     private Button btnAuth;
-	
+
 
     @Override
     protected void onCreate(Bundle b) {
-		setTheme(ThemeManager.get(this).getCurrentTheme());
-		getWindow().setBackgroundDrawable(new ColorDrawable(ThemeManager.get(this).getPrimaryColor()));
+        setTheme(ThemeManager.get(this).getCurrentTheme());
+        getWindow().setBackgroundDrawable(new ColorDrawable(ThemeManager.get(this).getPrimaryColor()));
         super.onCreate(b);
 
         if (Utils.getPrefs(this).getBoolean("show_login", true)) {
             if (Utils.hasConnection(this)) {
-                account = new Account();
-                account.restore(this);
+                account = Account.get(this).restore();
                 setContentView(R.layout.activity_start);
-				(findViewById(R.id.downLLStart)).setBackgroundColor(ThemeManager.get(this).getSecondaryBackgroundColor());
+                (findViewById(R.id.downLLStart)).setBackgroundColor(ThemeManager.get(this).getSecondaryBackgroundColor());
                 btnAuth = (Button) findViewById(R.id.btnLogin);
                 ivAva = (ImageView) findViewById(R.id.ivAva);
                 btnAuth.setText(account.user_id == 0 ? getString(R.string.authorize).toUpperCase() : getString(R.string.login).toUpperCase());
-				GradientDrawable gd = new GradientDrawable();
-				gd.setColor(ThemeManager.get(this).getButtonColor());
-				gd.setCornerRadius(75);
-				btnAuth.setBackgroundDrawable(gd);
-                if(account.avatar != null)
-                try {
-                    Picasso.with(this).load(account.avatar).placeholder(R.drawable.camera_200).into(ivAva);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                GradientDrawable gd = new GradientDrawable();
+                gd.setColor(ThemeManager.get(this).getButtonColor());
+                gd.setCornerRadius(75);
+                btnAuth.setBackgroundDrawable(gd);
+                if (account.avatar != null)
+                    try {
+                        Picasso.with(this).load(account.avatar).placeholder(R.drawable.camera_200).into(ivAva);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
 
                 ivAva.setVisibility(account.user_id == 0 ? View.GONE : View.VISIBLE);
 
@@ -81,15 +87,14 @@ public class StartActivity extends AppCompatActivity {
             }
         } else {
             if (Utils.hasConnection(this)) {
-                account = new Account();
-                account.restore(this);
+                account = new Account(this);
                 if (account.user_id == 0)
                     startActivityForResult(new Intent(this, LoginActivity.class), MainActivity.REQUEST_LOGIN);
                 else
                     getMoreAccountInfo();
             }
         }
-		
+
     }
 
     @Override
@@ -98,7 +103,7 @@ public class StartActivity extends AppCompatActivity {
             if (resultCode == RESULT_OK) {
                 account.access_token = data.getStringExtra("access_token");
                 account.user_id = data.getLongExtra("user_id", 0);
-                account.save(StartActivity.this);
+                account.save();
                 getMoreAccountInfo();
             } else
                 ActivityCompat.finishAffinity(this);
@@ -124,11 +129,12 @@ public class StartActivity extends AppCompatActivity {
                     for (VKFullUser user : apiProfile) {
                         account.avatar = user.photo_200;
                         account.name = user.toString();
+                        account.isMusicPlaying = apiStatus.audio != null;
                         account.small_avatar = user.photo_50;
                         account.status = apiStatus.text.length() > 0 ? apiStatus.text : "@id" + String.valueOf(account.user_id);
                     }
 
-                    account.save(getApplicationContext());
+                    account.save();
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {

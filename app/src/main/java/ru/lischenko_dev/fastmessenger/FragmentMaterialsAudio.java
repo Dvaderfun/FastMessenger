@@ -1,34 +1,29 @@
-package ru.lischenko_dev.fastmessenger.fragment.material;
+package ru.lischenko_dev.fastmessenger;
 
 
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 
-import ru.lischenko_dev.fastmessenger.R;
-import ru.lischenko_dev.fastmessenger.adapter.AudioMaterialAdapter;
-import ru.lischenko_dev.fastmessenger.adapter.AudioMaterialItems;
-import ru.lischenko_dev.fastmessenger.util.Account;
+import ru.lischenko_dev.fastmessenger.adapter.MaterialsAdapter;
+import ru.lischenko_dev.fastmessenger.adapter.MaterialsAudioAdapter;
+import ru.lischenko_dev.fastmessenger.common.Account;
 import ru.lischenko_dev.fastmessenger.vkapi.Api;
 import ru.lischenko_dev.fastmessenger.vkapi.models.VKMessageAttachment;
 
-public class FragmentAudio extends Fragment {
+public class FragmentMaterialsAudio extends Fragment {
 
     private ListView lv;
     private long uid, cid;
-    private AudioMaterialAdapter adapter;
     private Api api;
-    private Account account = new Account();
+    private Account account;
     private long id;
     private ProgressBar progressBar;
 
@@ -37,18 +32,10 @@ public class FragmentAudio extends Fragment {
         uid = getActivity().getIntent().getExtras().getLong("uid");
         cid = getActivity().getIntent().getExtras().getLong("cid");
         View rootView = inflater.inflate(R.layout.materials_audio, container, false);
-        lv = (ListView) rootView.findViewById(R.id.lv);
-        progressBar = (ProgressBar) rootView.findViewById(R.id.progress);
-        account.restore(getActivity());
+        lv = rootView.findViewById(R.id.lv);
+        progressBar = rootView.findViewById(R.id.progress);
+        account = Account.get(getActivity());
         api = Api.init(account);
-
-        lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                AudioMaterialItems item = (AudioMaterialItems) adapterView.getItemAtPosition(i);
-                Toast.makeText(getActivity(), "Простите, но аудиозапись '" + item.attachment.audio.title + "' недоступна для прослушивания.", Toast.LENGTH_SHORT).show();
-            }
-        });
         new getAudios().execute();
         return rootView;
     }
@@ -67,20 +54,19 @@ public class FragmentAudio extends Fragment {
                 @Override
                 public void run() {
                     try {
-                        final ArrayList<AudioMaterialItems> items = new ArrayList<>();
+                        final ArrayList<MaterialsAdapter> items = new ArrayList<>();
                         if (cid == 0)
                             id = uid;
                         else id = 2000000000 + cid;
 
                         ArrayList<VKMessageAttachment> apiMessagesHistory = api.getHistoryAttachments(id, "audio", 0, 200, null);
                         for (VKMessageAttachment message : apiMessagesHistory) {
-                            items.add(new AudioMaterialItems(message));
-                            Log.e("Links", message.audio.url);
+                            items.add(new MaterialsAdapter(message));
                         }
                         getActivity().runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                adapter = new AudioMaterialAdapter(getActivity(), items);
+                                MaterialsAudioAdapter adapter = new MaterialsAudioAdapter(getActivity(), items);
                                 lv.setAdapter(adapter);
                             }
                         });

@@ -3,13 +3,15 @@ package ru.lischenko_dev.fastmessenger;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -18,7 +20,8 @@ import com.squareup.picasso.Picasso;
 import java.util.ArrayList;
 
 import ru.lischenko_dev.fastmessenger.adapter.ChatInfoAdapter;
-import ru.lischenko_dev.fastmessenger.util.Account;
+import ru.lischenko_dev.fastmessenger.common.Account;
+import ru.lischenko_dev.fastmessenger.common.ThemeManager;
 import ru.lischenko_dev.fastmessenger.vkapi.Api;
 import ru.lischenko_dev.fastmessenger.vkapi.models.VKChat;
 import ru.lischenko_dev.fastmessenger.vkapi.models.VKFullUser;
@@ -26,32 +29,43 @@ import ru.lischenko_dev.fastmessenger.vkapi.models.VKFullUser;
 public class ChatInfoActivity extends AppCompatActivity implements EditText.OnEditorActionListener {
 
     private long cid;
-    ListView lv;
+    private RecyclerView recyclerView;
     private Api api;
     private String title;
-    private Account account = new Account();
+    private Account account;
     private EditText et;
     private ImageView ivAva;
     private VKChat chat;
+    private ThemeManager manager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        manager = ThemeManager.get(this);
+        setTheme(manager.getCurrentTheme());
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_info);
 
         Toolbar tb = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(tb);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        account.restore(this);
+        account = Account.get(this);
         api = Api.init(account);
         cid = getIntent().getExtras().getLong("cid");
         title = getIntent().getExtras().getString("title");
-        lv = (ListView) findViewById(R.id.lv);
+        recyclerView = (RecyclerView) findViewById(R.id.lv);
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(this);
+        recyclerView.setLayoutManager(layoutManager);
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setItemAnimator(new DefaultItemAnimator());
         et = (EditText) findViewById(R.id.et);
         ivAva = (ImageView) findViewById(R.id.ivAva);
 
         et.setText(title);
         et.setOnEditorActionListener(this);
+
+        manager.setHrBackgroundColor(findViewById(R.id.hr));
+        et.setHintTextColor(manager.getSecondaryTextColor());
+        et.setTextColor(manager.getEditTextColor());
         getSupportActionBar().setTitle(title);
         new ChatInfoGetter().execute();
         getChatById();
@@ -135,8 +149,8 @@ public class ChatInfoActivity extends AppCompatActivity implements EditText.OnEd
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                ChatInfoAdapter adapter = new ChatInfoAdapter(getApplicationContext(), apiChatUsers, api);
-                                lv.setAdapter(adapter);
+                                ChatInfoAdapter adapter = new ChatInfoAdapter(apiChatUsers, getApplicationContext());
+                                recyclerView.setAdapter(adapter);
                             }
                         });
                     } catch (Exception e) {

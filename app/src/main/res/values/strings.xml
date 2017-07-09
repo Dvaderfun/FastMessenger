@@ -10,6 +10,7 @@
     <string name="type_message">Your message&#8230;</string>
     <string name="nav_logout">Logout from account</string>
     <string name="update">Update</string>
+    <string name="updating">Updating</string>
     <string name="search">Find</string>
     <string name="type_message_error">Type your message!</string>
     <string name="warning">Warning!</string>
@@ -20,7 +21,7 @@
     <string name="materials_audio">Audios</string>
     <string name="materials_video">Videos</string>
     <string name="materials_doc">Documents</string>
-    <string name="wait">Wait</string>
+    <string name="wait">Wait&#8230;</string>
     <string name="login_wait_message">Login in&#8230;</string>
     <string name="leave_from_chat">Leave from chat</string>
     <string name="return_to_chat">Return to chat</string>
@@ -56,7 +57,13 @@
     <string name="replies">Replies</string>
     <string name="refresh">Refresh</string>
     <string name="refreshing">Refreshing&#8230;</string>
-	<string name="crash_text">App has been crashed.</string>
+    <string name="crash_text">App has been crashed.</string>
     <string name="nav_settings">Settings</string>
     <string name="nav_functional">Functional</string>
+    <string name="cant_work_without_permissions">OTA Can\'t work without storage permission!</string>
+    <string name="grant_permissions">Grant</string>
+    <string name="need_permissions_message">Storage permission is needed to download OTA files</string>
+    <string name="refreshed_message">Refreshed</string>
+    <string name="invited_by">Invited by</string>
+    <string name="downloading">Downloading&#8230;</string>
 </resources>

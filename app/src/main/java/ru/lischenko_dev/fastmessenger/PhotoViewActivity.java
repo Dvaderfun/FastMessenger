@@ -9,7 +9,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.ViewGroup;
 import android.widget.Toast;
-import com.squareup.picasso.*;
+
+import com.squareup.picasso.Picasso;
 
 public class PhotoViewActivity extends AppCompatActivity {
 
@@ -38,7 +39,7 @@ public class PhotoViewActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(PhotoViewActivity.this, "Refreshed", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(PhotoViewActivity.this, R.string.refreshed_message, Toast.LENGTH_SHORT).show();
                 }
             });
         } catch (Exception e) {

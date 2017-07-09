@@ -1,6 +1,7 @@
 package ru.lischenko_dev.fastmessenger.adapter;
 
-import ru.lischenko_dev.fastmessenger.vkapi.models.*;
+import ru.lischenko_dev.fastmessenger.vkapi.models.VKFullUser;
+import ru.lischenko_dev.fastmessenger.vkapi.models.VKMessage;
 
 public class MessagesItem {
     public VKMessage message;

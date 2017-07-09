@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.graphics.Typeface;
+import android.support.v7.widget.RecyclerView;
 import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableString;
@@ -14,7 +15,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -22,135 +22,131 @@ import android.widget.TextView;
 import com.squareup.picasso.Picasso;
 
 import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 
 import ru.lischenko_dev.fastmessenger.R;
-import ru.lischenko_dev.fastmessenger.util.Account;
-import ru.lischenko_dev.fastmessenger.util.ThemeManager;
+import ru.lischenko_dev.fastmessenger.common.Account;
+import ru.lischenko_dev.fastmessenger.common.ThemeManager;
 import ru.lischenko_dev.fastmessenger.view.CircleImageView;
 import ru.lischenko_dev.fastmessenger.view.CircleView;
 import ru.lischenko_dev.fastmessenger.vkapi.VKUtils;
 import ru.lischenko_dev.fastmessenger.vkapi.models.VKAttachment;
 import ru.lischenko_dev.fastmessenger.vkapi.models.VKMessage;
 
-public class MessagesAdapter extends BaseAdapter {
-    private Context context;
+public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHolder> {
 
-	private Account account = new Account();
     private ArrayList<MessagesItem> items;
-    private LayoutInflater inflater;
-	private ThemeManager manager;
+    private Context context;
+    private ThemeManager manager;
+    private OnItemClickListener listener;
 
-    public MessagesAdapter(Context context, ArrayList<MessagesItem> items) {
-        this.context = context;
+    public MessagesAdapter(ArrayList<MessagesItem> items, Context context) {
         this.items = items;
-		this.manager = ThemeManager.get(context);
-		this.account.restore(this.context);
-        inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-	
-        EventBus.getDefault().register(this);
+        this.context = context;
+        this.manager = ThemeManager.get(context);
+    }
 
+    public void setListener(OnItemClickListener l) {
+        this.listener = l;
+    }
+
+    private void initListeners(View v, final int position) {
+        v.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                if (listener != null) {
+                    listener.onItemLongClick(v, position);
+                }
+                return true;
+            }
+        });
+        v.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (listener != null) {
+                    listener.onItemClick(v, position);
+                }
+            }
+        });
     }
 
     @Override
-    public int getCount() {
-        return items.size();
+    public MessagesAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+
+        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.fragment_messages_list, parent, false);
+        ViewHolder vh = new ViewHolder(v);
+        return vh;
+    }
+
+    public void destroy() {
+        if (EventBus.getDefault().isRegistered(this))
+            EventBus.getDefault().unregister(this);
     }
 
     @Override
-    public Object getItem(int position) {
-        return items.get(position);
-    }
+    public void onBindViewHolder(ViewHolder holder, int position) {
+        initListeners(holder.itemView, position);
+        MessagesItem item = items.get(position);
+        manager.setHrBackgroundColor(holder.hr);
+        holder.ivChat.setVisibility(item.message.isChat() ? View.VISIBLE : View.GONE);
 
-    @Override
-    public long getItemId(int position) {
-        return position;
-    }
-
-    @Override
-    public View getView(final int position, View convertView, final ViewGroup parent) {
-        ViewHolder viewHolder;
-        if (convertView == null) {
-            convertView = inflater.inflate(R.layout.fragment_messages_list, parent, false);
-            viewHolder = new ViewHolder();
-            viewHolder.tvBody = convertView.findViewById(R.id.tvBody);
-            viewHolder.tvDate = convertView.findViewById(R.id.tvDate);
-            viewHolder.ivAva = convertView.findViewById(R.id.ivAva);
-            viewHolder.ivAvaSmall = convertView.findViewById(R.id.ivAvaSmall);
-            viewHolder.tvName = convertView.findViewById(R.id.tvName);
-            viewHolder.ivOnline = convertView.findViewById(R.id.ivOnline);
-            viewHolder.rl = convertView.findViewById(R.id.main_container);
-            viewHolder.ivChat = convertView.findViewById(R.id.ivChat);
-            viewHolder.counter = convertView.findViewById(R.id.ivCount);
-            viewHolder.hr = convertView.findViewById(R.id.hr);
-            convertView.setTag(viewHolder);
-        } else {
-            viewHolder = (ViewHolder) convertView.getTag();
-        }
-        MessagesItem item = (MessagesItem) getItem(position);
-
-		manager.setHrBackgroundColor(viewHolder.hr);
-		viewHolder.ivChat.setVisibility(item.message.isChat() ? View.VISIBLE: View.GONE);
-		
-        viewHolder.counter.setVisibility(!item.message.is_out && !item.message.read_state ? View.VISIBLE : View.GONE);
-        viewHolder.counter.setCircleColor(0xff1565c0);
-        viewHolder.counter.setText(String.valueOf(item.message.unread));
-        viewHolder.counter.setTextColor(Color.WHITE);
-        viewHolder.counter.setTextSize(12);
+        holder.counter.setVisibility(!item.message.is_out && !item.message.read_state ? View.VISIBLE : View.GONE);
+        holder.counter.setCircleColor(0xff1565c0);
+        holder.counter.setText(String.valueOf(item.message.unread));
+        holder.counter.setTextColor(Color.WHITE);
+        holder.counter.setTextSize(12);
 
         String count = String.valueOf(item.message.unread);
         if (count.length() > 3) {
-            viewHolder.counter.setText(count.substring(0, 1) + "K+");
+            holder.counter.setText(count.substring(0, 1) + "K+");
         } else if (count.length() > 2)
-            viewHolder.counter.setTextSize(10);
-		
-		viewHolder.tvName.setTextColor(manager.getPrimaryTextColor());
-		viewHolder.tvBody.setTextColor(manager.getSecondaryTextColor());
-		viewHolder.tvDate.setTextColor(manager.getSecondaryTextColor());
-			
-        viewHolder.tvName.setText(item.message.isChat() ? item.message.title : item.user.toString());
-        viewHolder.tvDate.setText(new SimpleDateFormat("HH:mm").format(item.message.date * 1000));
+            holder.counter.setTextSize(10);
 
-        viewHolder.rl.setBackgroundDrawable(item.message.read_state ? null : item.message.is_out ? context.getResources().getDrawable(R.drawable.ic_not_read_body) : null);
-        
-		if(viewHolder.rl.getBackground() != null)
-		viewHolder.rl.getBackground().setColorFilter(manager.getUnreadColor(), PorterDuff.Mode.MULTIPLY);
-		
+        holder.tvName.setTextColor(manager.getPrimaryTextColor());
+        holder.tvBody.setTextColor(manager.getSecondaryTextColor());
+        holder.tvDate.setTextColor(manager.getSecondaryTextColor());
+
+        holder.tvName.setText(item.message.isChat() ? item.message.title : item.user.toString());
+        holder.tvDate.setText(new SimpleDateFormat("HH:mm").format(item.message.date * 1000));
+
+        holder.rl.setBackgroundDrawable(item.message.read_state ? null : item.message.is_out ? context.getResources().getDrawable(R.drawable.ic_not_read_body) : null);
+
+        if (holder.rl.getBackground() != null)
+            holder.rl.getBackground().setColorFilter(manager.getUnreadColor(), PorterDuff.Mode.MULTIPLY);
+
         if (!item.message.isChat() && !item.message.is_out)
-            viewHolder.ivAvaSmall.setVisibility(View.GONE);
+            holder.ivAvaSmall.setVisibility(View.GONE);
         try {
-            Picasso.with(context).load(item.message.isChat() ? item.message.photo_200 : item.user.photo_200).placeholder(R.drawable.camera_200).into(viewHolder.ivAva);
-            Picasso.with(context).load(item.message.isChat() ? item.message.is_out ? account.small_avatar : item.user.photo_50 : item.message.is_out ? account.small_avatar : item.user.photo_50).placeholder(R.drawable.camera_200).into(viewHolder.ivAvaSmall);
+            Picasso.with(context).load(item.message.isChat() ? item.message.photo_200 : item.user.photo_200).placeholder(R.drawable.camera_200).into(holder.ivAva);
+            Picasso.with(context).load(item.message.isChat() ? item.message.is_out ? Account.get(context).getSmallAvatar() : item.user.photo_50 : item.message.is_out ? Account.get(context).getSmallAvatar() : item.user.photo_50).placeholder(R.drawable.camera_200).into(holder.ivAvaSmall);
         } catch (Exception e) {
             Log.e("АААААААА ОШИИИИИБКААААА", e.toString());
         }
 
         try {
-            viewHolder.ivOnline.setVisibility(View.GONE);
+            holder.ivOnline.setVisibility(View.GONE);
             if (!item.message.isChat())
-                viewHolder.ivOnline.setVisibility(item.user.online ? View.VISIBLE : View.GONE);
+                holder.ivOnline.setVisibility(item.user.online ? View.VISIBLE : View.GONE);
             else
-                viewHolder.ivOnline.setVisibility(View.GONE);
-            viewHolder.ivAvaSmall.setVisibility(item.message.isChat() ? View.VISIBLE : item.message.is_out ? View.VISIBLE : View.GONE);
+                holder.ivOnline.setVisibility(View.GONE);
+            holder.ivAvaSmall.setVisibility(item.message.isChat() ? View.VISIBLE : item.message.is_out ? View.VISIBLE : View.GONE);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        viewHolder.tvBody.setText(item.message.body);
+        holder.tvBody.setText(item.message.body);
 
         if (item.message.body.length() == 0)
             if (!item.message.attachments.isEmpty()) {
-				for (VKAttachment att : item.message.attachments) {
-					//viewHolder.tvBody.setText(VKUtils.getStringAttachment(att.type));
-					//Spannable text = new SpannableString(attachment);
-					// text.setSpan(new StyleSpan(Typeface.BOLD), 0, attachment.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-					viewHolder.tvBody.setText(Html.fromHtml(String.format("<b>%s</b>", VKUtils.getStringAttachment(att.type))));
-					viewHolder.tvBody.setTextColor(context.getResources().getColor(R.color.colorPrimary));
-				}
-				
+                for (VKAttachment att : item.message.attachments) {
+                    //viewHolder.tvBody.setText(VKUtils.getStringAttachment(att.type));
+                    //Spannable text = new SpannableString(attachment);
+                    // text.setSpan(new StyleSpan(Typeface.BOLD), 0, attachment.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                    holder.tvBody.setText(Html.fromHtml(String.format("<b>%s</b>", VKUtils.getStringAttachment(att.type))));
+                    holder.tvBody.setTextColor(context.getResources().getColor(R.color.colorPrimary));
+                }
+
             }
         if (!TextUtils.isEmpty(item.message.action)) {
             String action = null;
@@ -189,40 +185,23 @@ public class MessagesAdapter extends BaseAdapter {
             }
             Spannable text = new SpannableString(action);
             text.setSpan(new StyleSpan(Typeface.BOLD), 0, action.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            viewHolder.tvBody.setText(text);
-            viewHolder.tvBody.setTextColor(Color.parseColor("#1565c0"));
-        }
-
-        return convertView;
-    }
-
-    @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onNewMessage(final VKMessage msg) {
-
-    }
-
-    @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onReadMessage(Integer id) {
-        VKMessage message = searchMessage(id);
-        if (message != null) {
-            message.read_state = true;
-            message.unread = 0;
-            notifyDataSetChanged();
+            holder.tvBody.setText(text);
+            holder.tvBody.setTextColor(Color.parseColor("#1565c0"));
         }
     }
 
-    private VKMessage searchMessage(int id) {
-        for (int i = 0; i < items.size(); i++) {
-            MessagesItem item = items.get(i);
-            VKMessage msg = item.message;
-            if (msg.mid == id) {
-                return msg;
-            }
-        }
-        return null;
+    @Override
+    public int getItemCount() {
+        return items.size();
     }
 
-    private static class ViewHolder {
+    public interface OnItemClickListener {
+        void onItemClick(View view, int position);
+
+        void onItemLongClick(View view, int position);
+    }
+
+    public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvBody;
         TextView tvDate;
         CircleImageView ivAva;
@@ -230,13 +209,23 @@ public class MessagesAdapter extends BaseAdapter {
         TextView tvName;
         CircleView ivOnline;
         LinearLayout rl;
-		ImageView ivChat;
+        ImageView ivChat;
         CircleView counter;
-		View hr;
-    }
+        View hr;
 
-    public void destroy() {
-        if (EventBus.getDefault().isRegistered(this))
-            EventBus.getDefault().unregister(this);
+        public ViewHolder(View v) {
+            super(v);
+            tvBody = v.findViewById(R.id.tvBody);
+            tvDate = v.findViewById(R.id.tvDate);
+            ivAva = v.findViewById(R.id.ivAva);
+            ivAvaSmall = v.findViewById(R.id.ivAvaSmall);
+            tvName = v.findViewById(R.id.tvName);
+            ivOnline = v.findViewById(R.id.ivOnline);
+            rl = v.findViewById(R.id.main_container);
+            ivChat = v.findViewById(R.id.ivChat);
+            counter = v.findViewById(R.id.ivCount);
+            hr = v.findViewById(R.id.hr);
+
+        }
     }
 }

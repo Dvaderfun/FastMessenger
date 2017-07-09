@@ -7,13 +7,13 @@ import android.os.IBinder;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import ru.lischenko_dev.fastmessenger.util.Account;
+import ru.lischenko_dev.fastmessenger.common.Account;
 import ru.lischenko_dev.fastmessenger.vkapi.Api;
 
 public class OnlineService extends Service {
 
     private Timer timer;
-    private Account account = new Account();
+    private Account account;
     private Api api;
 
     public OnlineService() {
@@ -22,7 +22,7 @@ public class OnlineService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        account.restore(this);
+        account = Account.get(this);
         api = Api.init(account);
         timer = new Timer();
         timer.schedule(new TimerTask() {

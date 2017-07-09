@@ -8,25 +8,27 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 
 import ru.lischenko_dev.fastmessenger.R;
-import ru.lischenko_dev.fastmessenger.vkapi.models.VKVideo;
+import ru.lischenko_dev.fastmessenger.common.App;
+import ru.lischenko_dev.fastmessenger.common.ThemeManager;
 
-public class VideoMaterialAdapter extends BaseAdapter {
 
-    ArrayList<VideoMaterialItems> items;
-    Context context;
-    LayoutInflater inflater;
+public class MaterialsPhotoAdapter extends BaseAdapter {
 
-    public VideoMaterialAdapter(Context context, ArrayList<VideoMaterialItems> items) {
-        this.items = items;
+    private ArrayList<MaterialsAdapter> items;
+    private Context context;
+    private LayoutInflater inflater;
+    private ThemeManager manager;
+
+    public MaterialsPhotoAdapter(Context context, ArrayList<MaterialsAdapter> items) {
         this.context = context;
+        this.items = items;
+        this.manager = ThemeManager.get(context);
         inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
 
@@ -47,25 +49,16 @@ public class VideoMaterialAdapter extends BaseAdapter {
 
     @Override
     public View getView(int i, View view, ViewGroup viewGroup) {
+        MaterialsAdapter item = (MaterialsAdapter) getItem(i);
         View v = view;
         if (v == null) {
-            v = inflater.inflate(R.layout.materials_video_list, viewGroup, false);
+            v = inflater.inflate(R.layout.materials_photo_list, viewGroup, false);
         }
 
-        VideoMaterialItems item = (VideoMaterialItems) getItem(i);
-        VKVideo k = item.att.video;
-        ImageView iv = (ImageView) v.findViewById(R.id.photo);
-        TextView tvTitle = (TextView) v.findViewById(R.id.tvTitle);
-        TextView see = (TextView) v.findViewById(R.id.tvSee);
-        TextView tvDate = (TextView) v.findViewById(R.id.tvDate);
-
-        tvTitle.setText(k.title);
-        see.setText(String.valueOf(k.views));
-
-        tvDate.setText(new SimpleDateFormat("dd.MM.yyyy").format(k.date * 1000));
+        ImageView iv = v.findViewById(R.id.photo);
         Picasso.with(context)
-                .load(k.image_big)
-				.resize(200, 200)
+                .load(item.attachment.photo.src_big)
+                .resize(App.screenWidth / 3, App.screenWidth / 3)
                 .centerCrop()
                 .placeholder(new ColorDrawable(Color.GRAY))
                 .into(iv);

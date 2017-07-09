@@ -1,26 +1,36 @@
-package ru.lischenko_dev.fastmessenger.util;
+package ru.lischenko_dev.fastmessenger.common;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
-import android.preference.PreferenceManager;
+
+import ru.lischenko_dev.fastmessenger.util.Utils;
 
 public class Account {
 
-    public String access_token;
-    public long user_id;
+    public long user_id = 0;
+    public String avatar, name, status, small_avatar, access_token = null;
+    public boolean isMusicPlaying = false;
 
-    public String avatar, name, status, small_avatar = null;
+    private SharedPreferences prefs = null;
+    private SharedPreferences.Editor editor = null;
 
-    private SharedPreferences prefs;
-    private Editor editor;
+    private Context context = null;
 
-    public Account() {
-
+    public Account(Context context) {
+        this.context = context;
+        restore();
     }
 
-    public void save(Context c) {
-        prefs = PreferenceManager.getDefaultSharedPreferences(c);
+    public static Account get(Context context) {
+        return new Account(context);
+    }
+
+    public boolean isMusicPlaying() {
+        return isMusicPlaying;
+    }
+
+    public void save() {
+        prefs = Utils.getPrefs(context);
         editor = prefs.edit();
         editor.putString("access_token", access_token);
         editor.putLong("user_id", user_id);
@@ -28,29 +38,32 @@ public class Account {
         editor.putString("small_avatar", small_avatar);
         editor.putString("name", name);
         editor.putString("status", status);
-
+        editor.putBoolean("isMusicPlaying", isMusicPlaying);
         editor.apply();
     }
 
-    public void restore(Context c) {
-        prefs = PreferenceManager.getDefaultSharedPreferences(c);
+    public Account restore() {
+        prefs = Utils.getPrefs(context);
         access_token = prefs.getString("access_token", "");
         user_id = prefs.getLong("user_id", 0);
         avatar = prefs.getString("avatar", "");
         small_avatar = prefs.getString("small_avatar", "");
         name = prefs.getString("name", "");
         status = prefs.getString("status", "");
+        isMusicPlaying = prefs.getBoolean("isMusicPlaying", false);
+
+        return null;
     }
 
-    public void clear(Context c) {
-        access_token = null;
-        user_id = 0;
-        avatar = null;
-        small_avatar = null;
-        status = null;
-        name = null;
-
-        save(c);
+    public void clear() {
+        editor = Utils.getPrefs(context).edit();
+        editor.remove("access_token");
+        editor.remove("user_id");
+        editor.remove("name");
+        editor.remove("status");
+        editor.remove("isMusicPlaying");
+        editor.apply();
+        save();
     }
 
     @Override

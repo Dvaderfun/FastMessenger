@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="72dp"
+    android:background="?attr/selectableItemBackground"
     android:gravity="center_vertical"
     android:paddingTop="3dp">
 
@@ -60,16 +61,16 @@
             android:layout_height="wrap_content"
             android:layout_alignBottom="@+id/ivAva"
             android:layout_alignLeft="@+id/tvName"
-            android:textColor="#808080"
             android:layout_alignStart="@+id/tvName"
+            android:textColor="#808080"
             tools:text="Online" />
 
     </RelativeLayout>
 
     <View
+        android:id="@+id/hr"
         android:layout_width="match_parent"
         android:layout_height="1dp"
-		android:id="@+id/hr"
         android:layout_alignParentBottom="true"
         android:layout_marginLeft="28dp"
         android:layout_marginStart="28dp" />

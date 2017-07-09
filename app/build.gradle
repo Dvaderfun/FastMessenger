@@ -5,10 +5,10 @@ android {
     buildToolsVersion "26.0.0"
     defaultConfig {
         applicationId "ru.lischenko_dev.fastmessenger"
-        minSdkVersion 14
+        minSdkVersion 19
         targetSdkVersion 26
         versionCode 1
-        versionName "0.9.2"
+        versionName "0.8.3"
         vectorDrawables.useSupportLibrary = true
     }
     buildTypes {

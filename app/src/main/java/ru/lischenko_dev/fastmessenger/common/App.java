@@ -23,7 +23,7 @@ public class App extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        //  ACRA.init(this);
+        ACRA.init(this);
         context = getApplicationContext();
         screenHeight = Utils.getDisplayHeight(this);
         screenWidth = Utils.getDisplayWidth(this);

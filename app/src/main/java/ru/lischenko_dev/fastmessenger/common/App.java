@@ -34,6 +34,7 @@ public class App extends Application
         screenHeight = Utils.getDisplayHeight(this);
         screenWidth = Utils.getDisplayWidth(this);
 
+
 		if (Utils.hasConnection(this))
 			startService(new Intent(this, LongPollService.class));
     }

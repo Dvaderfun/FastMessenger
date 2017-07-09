@@ -18,7 +18,6 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import ru.lischenko_dev.fastmessenger.FragmentChat;
 import ru.lischenko_dev.fastmessenger.MainActivity;
 import ru.lischenko_dev.fastmessenger.R;
 import ru.lischenko_dev.fastmessenger.adapter.MessagesAdapter;

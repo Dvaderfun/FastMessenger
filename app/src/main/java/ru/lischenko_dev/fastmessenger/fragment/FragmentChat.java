@@ -1,4 +1,4 @@
-package ru.lischenko_dev.fastmessenger;
+package ru.lischenko_dev.fastmessenger.fragment;
 
 import android.graphics.Color;
 import android.graphics.PorterDuff;
@@ -11,6 +11,7 @@ import android.support.v7.widget.AppCompatEditText;
 import android.support.v7.widget.AppCompatImageButton;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,6 +22,8 @@ import android.widget.ProgressBar;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import ru.lischenko_dev.fastmessenger.MainActivity;
+import ru.lischenko_dev.fastmessenger.R;
 import ru.lischenko_dev.fastmessenger.adapter.ChatAdapter;
 import ru.lischenko_dev.fastmessenger.adapter.ChatItems;
 import ru.lischenko_dev.fastmessenger.util.Account;
@@ -117,6 +120,13 @@ public class FragmentChat extends Fragment {
 
         ((MainActivity) getActivity()).getSupportActionBar().setTitle(title);
         new ChatGetter(true).execute();
+
+        btnSend.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                sendMessage();
+            }
+        });
         return rootView;
     }
 
@@ -229,6 +239,7 @@ public class FragmentChat extends Fragment {
                     });
             } catch (Exception e) {
                 e.printStackTrace();
+                Log.e("Some error in chat get", e.toString());
             }
             return null;
         }

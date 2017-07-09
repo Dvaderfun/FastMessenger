@@ -1,13 +1,18 @@
 package ru.lischenko_dev.fastmessenger;
 
+import android.Manifest;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -21,6 +26,7 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
+import ru.lischenko_dev.fastmessenger.common.OTAManager;
 import ru.lischenko_dev.fastmessenger.fragment.FragmentFriends;
 import ru.lischenko_dev.fastmessenger.fragment.FragmentMessages;
 import ru.lischenko_dev.fastmessenger.service.LongPollService;
@@ -32,6 +38,7 @@ import ru.lischenko_dev.fastmessenger.util.Utils;
 public class MainActivity extends AppCompatActivity {
 
     public static final int REQUEST_LOGIN = 1;
+    public static final int REQUEST_PERMISSIONS = 2;
 
     private Account account = new Account();
 
@@ -44,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
         setTheme(ThemeManager.get(this).getCurrentTheme());
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         initItems();
         account.restore(this);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -51,8 +59,12 @@ public class MainActivity extends AppCompatActivity {
             getWindow().setNavigationBarColor(ThemeManager.get(this).getPrimaryColor());
             toolbar.setElevation(8);
         }
-        if (Utils.hasConnection(this))
+
+        requestPermissionsForWrite();
+
+        if (Utils.hasConnection(this)) {
             initDrawerHeader(navigationView.getHeaderView(0));
+        }
 
         if (navigationView != null) {
             navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
@@ -87,6 +99,33 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private void requestPermissionsForWrite() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED)
+            Snackbar.make(drawerLayout, "Storage permission is needed to download OTA files", 4000).setAction("Grant", new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, MainActivity.REQUEST_PERMISSIONS);
+                }
+            }).show();
+        else OTAManager.get(this).checkOTAUpdates();
+
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        if (requestCode == MainActivity.REQUEST_PERMISSIONS) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
+                OTAManager.get(MainActivity.this).checkOTAUpdates();
+            else
+                Snackbar.make(drawerLayout, "OTA Cant work without storage permission!", 4000).setAction("Grant", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, MainActivity.REQUEST_PERMISSIONS);
+                    }
+                }).show();
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
 
     private void showExitDialog() {
         AlertDialog.Builder adb = new AlertDialog.Builder(this);

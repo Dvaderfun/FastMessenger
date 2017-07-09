@@ -14,7 +14,6 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 
-import ru.lischenko_dev.fastmessenger.FragmentChat;
 import ru.lischenko_dev.fastmessenger.MainActivity;
 import ru.lischenko_dev.fastmessenger.R;
 import ru.lischenko_dev.fastmessenger.adapter.FriendsAdapter;
@@ -51,6 +50,7 @@ public class FragmentFriends extends Fragment {
                 VKFullUser user = (VKFullUser) parent.getItemAtPosition(position);
                 Bundle b = new Bundle();
                 b.putLong("uid", user.uid);
+                b.putLong("cid", 0);
                 b.putString("title", user.toString());
                 FragmentChat chat = new FragmentChat();
                 chat.setArguments(b);

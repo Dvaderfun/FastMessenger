@@ -3,24 +3,28 @@ package ru.lischenko_dev.fastmessenger.util;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
-import android.preference.PreferenceManager;
 
-public class Account {
+public class VKAccount {
 
-    public String access_token;
+    private Context context;
+
     public long user_id;
-
-    public String avatar, name, status, small_avatar = null;
+    public String avatar, name, status, small_avatar, access_token = null;
 
     private SharedPreferences prefs;
     private Editor editor;
 
-    public Account() {
-
+    public VKAccount(Context context) {
+        this.context = context;
+        restore();
     }
 
-    public void save(Context c) {
-        prefs = PreferenceManager.getDefaultSharedPreferences(c);
+    public static VKAccount get(Context context) {
+        return new VKAccount(context);
+    }
+
+    public void save() {
+        prefs = Utils.getPrefs(context);
         editor = prefs.edit();
         editor.putString("access_token", access_token);
         editor.putLong("user_id", user_id);
@@ -28,29 +32,31 @@ public class Account {
         editor.putString("small_avatar", small_avatar);
         editor.putString("name", name);
         editor.putString("status", status);
-
         editor.apply();
     }
 
-    public void restore(Context c) {
-        prefs = PreferenceManager.getDefaultSharedPreferences(c);
+    public VKAccount restore() {
+        prefs = Utils.getPrefs(context);
         access_token = prefs.getString("access_token", "");
         user_id = prefs.getLong("user_id", 0);
         avatar = prefs.getString("avatar", "");
         small_avatar = prefs.getString("small_avatar", "");
         name = prefs.getString("name", "");
         status = prefs.getString("status", "");
+        return null;
     }
 
-    public void clear(Context c) {
-        access_token = null;
-        user_id = 0;
-        avatar = null;
-        small_avatar = null;
-        status = null;
-        name = null;
-
-        save(c);
+    public void clear() {
+        prefs = Utils.getPrefs(context);
+        editor = prefs.edit();
+        editor.remove("access_token");
+        editor.remove("avatar");
+        editor.remove("user_id");
+        editor.remove("small_avatar");
+        editor.remove("status");
+        editor.remove("name");
+        editor.apply();
+        save();
     }
 
     @Override
@@ -70,15 +76,4 @@ public class Account {
         return user_id;
     }
 
-    public String getToken() {
-        return access_token;
-    }
-
-    public String getAvatar() {
-        return avatar;
-    }
-
-    public String getSmallAvatar() {
-        return small_avatar;
-    }
 }

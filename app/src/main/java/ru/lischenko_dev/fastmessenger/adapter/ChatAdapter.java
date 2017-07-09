@@ -1,23 +1,42 @@
 package ru.lischenko_dev.fastmessenger.adapter;
 
-import android.app.*;
-import android.content.*;
-import android.graphics.*;
-import android.graphics.drawable.*;
-import android.net.*;
-import android.os.*;
-import android.text.*;
-import android.util.*;
-import android.view.*;
-import android.widget.*;
-import com.squareup.picasso.*;
-import java.util.*;
-import org.greenrobot.eventbus.*;
-import ru.lischenko_dev.fastmessenger.*;
-import ru.lischenko_dev.fastmessenger.util.*;
-import ru.lischenko_dev.fastmessenger.vkapi.*;
-import ru.lischenko_dev.fastmessenger.vkapi.models.*;
-import java.util.concurrent.*;
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
+import android.text.Html;
+import android.text.TextUtils;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.squareup.picasso.Picasso;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
+import java.util.ArrayList;
+
+import ru.lischenko_dev.fastmessenger.R;
+import ru.lischenko_dev.fastmessenger.common.App;
+import ru.lischenko_dev.fastmessenger.util.TextViewLinkHandler;
+import ru.lischenko_dev.fastmessenger.util.ThemeManager;
+import ru.lischenko_dev.fastmessenger.vkapi.Api;
+import ru.lischenko_dev.fastmessenger.vkapi.VKUtils;
+import ru.lischenko_dev.fastmessenger.vkapi.models.VKAttachment;
+import ru.lischenko_dev.fastmessenger.vkapi.models.VKFullUser;
+import ru.lischenko_dev.fastmessenger.vkapi.models.VKMessage;
 
 public class ChatAdapter extends BaseAdapter {
     private Context context;
@@ -26,73 +45,62 @@ public class ChatAdapter extends BaseAdapter {
     private Api api;
     private long cid;
     private long uid;
-	private ThemeManager manager;
+    private ThemeManager manager;
     private ListView lv;
-	private VKFullUser newUser;
+    private Activity activity;
 
-    public ChatAdapter(Context context, ArrayList<ChatItems> items, Api api, long cid, long uid, ListView lv) {
+    public ChatAdapter(Context context, ArrayList<ChatItems> items, Api api, long cid, long uid, ListView lv, Activity activity) {
         this.context = context;
         this.api = api;
         this.uid = uid;
         this.cid = cid;
         this.lv = lv;
-		this.manager = ThemeManager.get(context);
+        this.activity = activity;
+        this.manager = ThemeManager.get(context);
         this.items = items;
-		this.inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        this.inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         EventBus.getDefault().register(this);
     }
 
-	private class UserGet extends AsyncTask <VKFullUser, VKFullUser, VKFullUser> {
-
-		private long id;
-
-		public UserGet(long id) {
-			this.id = id;
-		}
-
-		@Override
-		protected VKFullUser doInBackground(VKFullUser[] p1) {
-			VKFullUser user = null;
-			try {
-				user = api.getProfile(id);
-			} catch (Exception e) {
-				e.printStackTrace();
-				Log.e("ErrorGetUserFromAsync", e.toString());
-			}
-			return user;
-		}
-	}
-
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onNewMessage(final VKMessage message) {
-		Log.d("LongPoll", "NewMessage with text: " + message.body);
-		if(!message.is_out)
-		new Thread(new Runnable() { 
-				@Override 
-				public void run() { 
-					try { 
-						// если это не тот диалог, в котором мы сейчас находимся 
-						if (message.uid != uid || message.chat_id != cid) { 
-							return; 
-						} 
-						
-						
-						
-						VKFullUser user = api.getProfile(message.uid); 
-						items.add(new ChatItems(message, user));
-						notifyDataSetChanged();
-						((Activity) context).runOnUiThread(new Runnable() {
+        if (message.is_out) return;
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    if (cid != message.chat_id && cid != 0) {
+                        return;
+                    } else if (message.uid != uid && cid == 0) {
+                        return;
+                    }
+                    VKFullUser user = null;
+                    ArrayList<Long> mids = new ArrayList<>(1);
+                    mids.add(message.mid);
 
-								@Override
-								public void run() {
-									lv.setSelection(getCount() + 1);
-								}
-						});
-					} catch (Exception e) { 
-						e.printStackTrace(); 
-					} 
-				} 
-			}).start(); 
+                    final VKMessage newMessage = Api.get().getMessagesById(mids).get(0);
+                    mids.clear();
+
+                    if (cid != 0) {
+                        if (user == null) {
+                            user = api.getProfile(message.uid);
+                        }
+                    }
+                    if (user == null) user = new VKFullUser();
+
+                    final VKFullUser finalUser = user;
+                    activity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            items.add(new ChatItems(newMessage, finalUser));
+                            notifyDataSetChanged();
+                        }
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -106,7 +114,7 @@ public class ChatAdapter extends BaseAdapter {
     }
 
     public void destroy() {
-		EventBus.getDefault().unregister(this);
+        EventBus.getDefault().unregister(this);
     }
 
     public VKMessage searchMessage(int id) {
@@ -139,22 +147,21 @@ public class ChatAdapter extends BaseAdapter {
     public View getView(int position, View convertView, ViewGroup parent) {
         ViewHolder viewHolder;
         if (convertView == null) {
-            convertView = inflater.inflate(R.layout.activity_chat_list, parent, false);
+            convertView = inflater.inflate(R.layout.fragment_chat_list, parent, false);
             viewHolder = new ViewHolder();
-            viewHolder.tvBody = (TextView) convertView.findViewById(R.id.tvBody);
-            viewHolder.mainContainer = (LinearLayout) convertView.findViewById(R.id.main_container);
-            viewHolder.bodyContainer = (LinearLayout) convertView.findViewById(R.id.bodyContainer);
-            viewHolder.ivAva = (ImageView) convertView.findViewById(R.id.ivAva);
+            viewHolder.tvBody = convertView.findViewById(R.id.tvBody);
+            viewHolder.mainContainer = convertView.findViewById(R.id.main_container);
+            viewHolder.bodyContainer = convertView.findViewById(R.id.bodyContainer);
+            viewHolder.ivAva = convertView.findViewById(R.id.ivAva);
             convertView.setTag(viewHolder);
-        }
-		else {
+        } else {
             viewHolder = (ViewHolder) convertView.getTag();
         }
 
 
-		ChatItems item = (ChatItems) getItem(position);
+        ChatItems item = (ChatItems) getItem(position);
         final VKMessage message = item.msg;
-		final VKFullUser user = item.user;
+        final VKFullUser user = item.user;
         viewHolder.tvBody.setText(message.body);
 
         Drawable bg = context.getResources().getDrawable(R.drawable.ic_msg_bg);
@@ -163,34 +170,34 @@ public class ChatAdapter extends BaseAdapter {
         viewHolder.tvBody.setTextColor(message.is_out ? Color.WHITE : manager.getBubbleInTextColor());
         viewHolder.ivAva.setVisibility(message.isChat() ? message.is_out ? View.GONE : View.VISIBLE : View.GONE);
 
-		if(viewHolder.ivAva.getVisibility() != View.GONE)
-        try {
-            Picasso.with(context).load(user.photo_50).placeholder(R.drawable.camera_200).into(viewHolder.ivAva);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        if (viewHolder.ivAva.getVisibility() != View.GONE)
+            try {
+                Picasso.with(context).load(user.photo_50).placeholder(R.drawable.camera_200).into(viewHolder.ivAva);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
         viewHolder.tvBody.setVisibility(TextUtils.isEmpty(message.body) ? View.GONE : View.VISIBLE);
         viewHolder.tvBody.setMaxWidth(App.screenWidth - (App.screenWidth / 4));
         viewHolder.mainContainer.setGravity(message.is_out ? Gravity.END : Gravity.START);
         viewHolder.ivAva.setOnLongClickListener(new View.OnLongClickListener() {
-				@Override
-				public boolean onLongClick(View p1) {
-					if(user != null)
-					Toast.makeText(context, user.toString(), Toast.LENGTH_SHORT).show();
-					return false;
-				}
-			});
+            @Override
+            public boolean onLongClick(View p1) {
+                if (user != null)
+                    Toast.makeText(context, user.toString(), Toast.LENGTH_SHORT).show();
+                return false;
+            }
+        });
         viewHolder.bodyContainer.setBackgroundDrawable(bg);
         viewHolder.tvBody.setMovementMethod(new TextViewLinkHandler() {
 
-				@Override
-				public void onLinkClick(String url) {
-					Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-					intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-					context.startActivity(intent);
-				}
-			});
+            @Override
+            public void onLinkClick(String url) {
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(intent);
+            }
+        });
 
         if (!message.attachments.isEmpty()) {
             for (VKAttachment att : message.attachments)
@@ -214,16 +221,14 @@ public class ChatAdapter extends BaseAdapter {
                 case VKMessage.ACTION_CHAT_KICK_USER:
                     if (user.uid == message.action_mid) {
                         viewHolder.tvBody.setText(Html.fromHtml(String.format("<b>%s</b> leaved from chat", user.toString())));
-                    }
-					else {
+                    } else {
                         viewHolder.tvBody.setText(Html.fromHtml(String.format("<b>%s</b> kicked user from chat", user.toString())));
                     }
                     break;
                 case VKMessage.ACTION_CHAT_INVITE_USER:
                     if (user.uid == message.action_mid) {
                         viewHolder.tvBody.setText(Html.fromHtml(String.format("<b>%s</b> returned to chat", user.toString())));
-                    }
-					else {
+                    } else {
                         viewHolder.tvBody.setText(Html.fromHtml(String.format("<b>%s</b> invited user to chat", user.toString())));
                     }
                     break;

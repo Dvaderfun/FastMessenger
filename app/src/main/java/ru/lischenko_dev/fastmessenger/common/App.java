@@ -1,15 +1,16 @@
-package ru.lischenko_dev.fastmessenger.util;
+package ru.lischenko_dev.fastmessenger.common;
 
-import android.app.*;
-import android.content.*;
-import android.os.*;
-import android.widget.*;
-import ru.lischenko_dev.fastmessenger.service.*;
-import org.acra.annotation.*;
-import org.acra.*;
+import android.app.Application;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Build;
 
-import ru.lischenko_dev.fastmessenger.common.*;
+import org.acra.ACRA;
+import org.acra.ReportingInteractionMode;
+import org.acra.annotation.ReportsCrashes;
 
+import ru.lischenko_dev.fastmessenger.service.LongPollService;
+import ru.lischenko_dev.fastmessenger.util.Utils;
 
 
 @ReportsCrashes(mailTo = "lischenkodev@gmail.com",

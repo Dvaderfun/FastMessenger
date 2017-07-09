@@ -1,21 +1,41 @@
 package ru.lischenko_dev.fastmessenger.adapter;
 
-import android.content.*;
-import android.graphics.*;
-import android.text.*;
-import android.text.style.*;
-import android.util.*;
-import android.view.*;
-import android.widget.*;
-import com.squareup.picasso.*;
-import java.text.*;
-import java.util.*;
-import org.greenrobot.eventbus.*;
-import ru.lischenko_dev.fastmessenger.*;
-import ru.lischenko_dev.fastmessenger.util.*;
-import ru.lischenko_dev.fastmessenger.view.*;
-import ru.lischenko_dev.fastmessenger.vkapi.*;
-import ru.lischenko_dev.fastmessenger.vkapi.models.*;
+import android.content.Context;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.Typeface;
+import android.text.Html;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.TextUtils;
+import android.text.style.StyleSpan;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.TextView;
+
+import com.squareup.picasso.Picasso;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+
+import ru.lischenko_dev.fastmessenger.R;
+import ru.lischenko_dev.fastmessenger.util.Account;
+import ru.lischenko_dev.fastmessenger.util.ThemeManager;
+import ru.lischenko_dev.fastmessenger.view.CircleImageView;
+import ru.lischenko_dev.fastmessenger.view.CircleView;
+import ru.lischenko_dev.fastmessenger.vkapi.VKUtils;
+import ru.lischenko_dev.fastmessenger.vkapi.models.VKAttachment;
+import ru.lischenko_dev.fastmessenger.vkapi.models.VKMessage;
 
 public class MessagesAdapter extends BaseAdapter {
     private Context context;
@@ -24,7 +44,6 @@ public class MessagesAdapter extends BaseAdapter {
     private ArrayList<MessagesItem> items;
     private LayoutInflater inflater;
 	private ThemeManager manager;
-    private Comparator<MessagesItem> comparator;
 
     public MessagesAdapter(Context context, ArrayList<MessagesItem> items) {
         this.context = context;
@@ -32,16 +51,6 @@ public class MessagesAdapter extends BaseAdapter {
 		this.manager = ThemeManager.get(context);
 		this.account.restore(this.context);
         inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        comparator = new Comparator<MessagesItem>() {
-            @Override
-            public int compare(MessagesItem o1, MessagesItem o2) {
-                long x = o1.message.date;
-                long y = o2.message.date;
-
-                return (x > y) ? -1 : ((x == y) ? 1 : 0);
-            }
-        };
-		
 	
         EventBus.getDefault().register(this);
 
@@ -68,16 +77,16 @@ public class MessagesAdapter extends BaseAdapter {
         if (convertView == null) {
             convertView = inflater.inflate(R.layout.fragment_messages_list, parent, false);
             viewHolder = new ViewHolder();
-            viewHolder.tvBody = (TextView) convertView.findViewById(R.id.tvBody);
-            viewHolder.tvDate = (TextView) convertView.findViewById(R.id.tvDate);
-            viewHolder.ivAva = (CircleImageView) convertView.findViewById(R.id.ivAva);
-            viewHolder.ivAvaSmall = (ImageView) convertView.findViewById(R.id.ivAvaSmall);
-            viewHolder.tvName = (TextView) convertView.findViewById(R.id.tvName);
-            viewHolder.ivOnline = (CircleView) convertView.findViewById(R.id.ivOnline);
-            viewHolder.rl = (LinearLayout) convertView.findViewById(R.id.main_container);
-            viewHolder.ivChat = (ImageView) convertView.findViewById(R.id.ivChat);
-			viewHolder.counter = (CircleView) convertView.findViewById(R.id.ivCount);
-			viewHolder.hr = convertView.findViewById(R.id.hr);
+            viewHolder.tvBody = convertView.findViewById(R.id.tvBody);
+            viewHolder.tvDate = convertView.findViewById(R.id.tvDate);
+            viewHolder.ivAva = convertView.findViewById(R.id.ivAva);
+            viewHolder.ivAvaSmall = convertView.findViewById(R.id.ivAvaSmall);
+            viewHolder.tvName = convertView.findViewById(R.id.tvName);
+            viewHolder.ivOnline = convertView.findViewById(R.id.ivOnline);
+            viewHolder.rl = convertView.findViewById(R.id.main_container);
+            viewHolder.ivChat = convertView.findViewById(R.id.ivChat);
+            viewHolder.counter = convertView.findViewById(R.id.ivCount);
+            viewHolder.hr = convertView.findViewById(R.id.hr);
             convertView.setTag(viewHolder);
         } else {
             viewHolder = (ViewHolder) convertView.getTag();
@@ -189,43 +198,6 @@ public class MessagesAdapter extends BaseAdapter {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onNewMessage(final VKMessage msg) {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-					VKFullUser user = Api.init(account).getProfile(msg.uid);
-                    int index = searchMessageIndex(msg.uid, msg.chat_id);
-                    if (index >= 0) {
-                        MessagesItem c = items.get(index);
-                        VKMessage current = c.message;
-						VKFullUser currentUser = c.user;
-                       /* current.mid = msg.mid;
-						if(!msg.attachments.isEmpty() && TextUtils.isEmpty(msg.body))
-						for(VKAttachment att : msg.attachments) {
-							current.body = VKUtils.getStringAttachment(att.type);
-						} else
-						current.body = msg.body;
-                        current.title = msg.title;
-                        current.date = msg.date;
-                        current.uid = msg.uid;
-						current.attachments = msg.attachments;
-                        current.chat_id = msg.chat_id;
-                        current.read_state = msg.read_state;
-                        current.is_out = msg.is_out;
-                        current.unread++;
-                        if (current.is_out) {
-                            current.unread = 0;
-                        }*/
-						//items.remove(msg.isChat() ? current : currentUser);
-						//items.add(new MessagesItem(msg, user));
-                       // Collections.sort(items, comparator);
-                    //    notifyDataSetChanged();
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
 
     }
 
@@ -248,21 +220,6 @@ public class MessagesAdapter extends BaseAdapter {
             }
         }
         return null;
-    }
-
-    private int searchMessageIndex(long userId, long chatId) {
-        for (int i = 0; i < items.size(); i++) {
-            MessagesItem item = items.get(i);
-            VKMessage msg = item.message;
-            if (msg.chat_id == chatId && chatId > 0) {
-                return i;
-            }
-
-            if (msg.uid == userId && chatId == 0) {
-                return i;
-            }
-        }
-        return -1;
     }
 
     private static class ViewHolder {

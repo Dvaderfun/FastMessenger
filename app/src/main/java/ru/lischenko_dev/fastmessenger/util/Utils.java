@@ -29,19 +29,18 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
-import ru.lischenko_dev.fastmessenger.*;
 
 public class Utils {
 
     private static final int[] TEMP_ARRAY = new int[1];
-	
-    static int getDisplayWidth(Context context) {
+
+    public static int getDisplayWidth(Context context) {
         DisplayMetrics metrics = new DisplayMetrics();
         getWindowManager(context).getDefaultDisplay().getMetrics(metrics);
         return metrics.widthPixels;
     }
 
-    static int getDisplayHeight(Context context) {
+    public static int getDisplayHeight(Context context) {
         DisplayMetrics metrics = new DisplayMetrics();
         getWindowManager(context).getDefaultDisplay().getMetrics(metrics);
         return metrics.heightPixels;
@@ -106,8 +105,8 @@ public class Utils {
         return dp;
     }
 
-    public static SharedPreferences getPrefs(Context c) {
-        return PreferenceManager.getDefaultSharedPreferences(c);
+    public static SharedPreferences getPrefs(Context context) {
+        return PreferenceManager.getDefaultSharedPreferences(context);
     }
 
     private static int getThemeAttrColor(Context context, int attr) {
@@ -134,11 +133,11 @@ public class Utils {
         }
     }
 
-    public static boolean hasConnection(Context c) {
-        if (c == null) {
+    public static boolean hasConnection(Context context) {
+        if (context == null) {
             return false;
         }
-        ConnectivityManager cm = (ConnectivityManager) c.getSystemService(Context.CONNECTIVITY_SERVICE);
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         return (cm.getActiveNetworkInfo() != null &&
                 cm.getActiveNetworkInfo().isAvailable() &&
                 cm.getActiveNetworkInfo().isConnected());

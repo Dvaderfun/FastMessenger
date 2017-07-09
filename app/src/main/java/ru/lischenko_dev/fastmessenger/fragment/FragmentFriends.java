@@ -1,6 +1,5 @@
 package ru.lischenko_dev.fastmessenger.fragment;
 
-import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -15,7 +14,7 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 
-import ru.lischenko_dev.fastmessenger.ChatActivity;
+import ru.lischenko_dev.fastmessenger.FragmentChat;
 import ru.lischenko_dev.fastmessenger.MainActivity;
 import ru.lischenko_dev.fastmessenger.R;
 import ru.lischenko_dev.fastmessenger.adapter.FriendsAdapter;
@@ -42,24 +41,25 @@ public class FragmentFriends extends Fragment {
         api = new Api(account.access_token, Constants.API_ID);
         View view = inflater.inflate(R.layout.fragment_friends, container, false);
 
-        ((MainActivity) getActivity()).getSupportActionBar().setTitle(getString(R.string.friends_fragment));
+        ((MainActivity) getActivity()).getSupportActionBar().setTitle(getString(R.string.nav_friends));
 
-        lv = (ListView) view.findViewById(R.id.lv);
-        progress = (ProgressBar) view.findViewById(R.id.progress);
+        lv = view.findViewById(R.id.lv);
+        progress = view.findViewById(R.id.progress);
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 VKFullUser user = (VKFullUser) parent.getItemAtPosition(position);
-                Intent intent = new Intent();
-                intent.setClass(getActivity(), ChatActivity.class);
-                intent.putExtra("uid", user.uid);
-                intent.putExtra("title", user.toString());
-                startActivity(intent);
+                Bundle b = new Bundle();
+                b.putLong("uid", user.uid);
+                b.putString("title", user.toString());
+                FragmentChat chat = new FragmentChat();
+                chat.setArguments(b);
+                getFragmentManager().beginTransaction().replace(R.id.container, chat, "chat").commit();
             }
         });
 
 
-        swipeRefreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.refresh);
+        swipeRefreshLayout = view.findViewById(R.id.refresh);
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {

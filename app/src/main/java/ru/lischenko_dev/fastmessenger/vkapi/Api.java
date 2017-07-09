@@ -17,7 +17,9 @@ import java.util.Collection;
 import java.util.Locale;
 import java.util.zip.GZIPInputStream;
 
+import ru.lischenko_dev.fastmessenger.util.Account;
 import ru.lischenko_dev.fastmessenger.util.Constants;
+import ru.lischenko_dev.fastmessenger.util.VKAccount;
 import ru.lischenko_dev.fastmessenger.vkapi.models.AudioAlbum;
 import ru.lischenko_dev.fastmessenger.vkapi.models.BannArg;
 import ru.lischenko_dev.fastmessenger.vkapi.models.City;
@@ -50,8 +52,6 @@ import ru.lischenko_dev.fastmessenger.vkapi.models.VKStatus;
 import ru.lischenko_dev.fastmessenger.vkapi.models.VKUser;
 import ru.lischenko_dev.fastmessenger.vkapi.models.VKVideo;
 import ru.lischenko_dev.fastmessenger.vkapi.models.VKWallMessage;
-
-import ru.lischenko_dev.fastmessenger.util.*;
 
 public class Api {
     static final String TAG = "Kate.Api";
@@ -136,6 +136,10 @@ public class Api {
     }
 
     public static Api init(Account account) {
+        return new Api(account.access_token, Constants.API_ID);
+    }
+
+    public static Api init(VKAccount account) {
         return new Api(account.access_token, Constants.API_ID);
     }
 

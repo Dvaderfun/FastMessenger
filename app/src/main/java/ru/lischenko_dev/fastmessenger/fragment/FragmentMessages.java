@@ -1,7 +1,6 @@
 package ru.lischenko_dev.fastmessenger.fragment;
 
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -19,24 +18,22 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import ru.lischenko_dev.fastmessenger.ChatActivity;
+import ru.lischenko_dev.fastmessenger.FragmentChat;
 import ru.lischenko_dev.fastmessenger.MainActivity;
 import ru.lischenko_dev.fastmessenger.R;
 import ru.lischenko_dev.fastmessenger.adapter.MessagesAdapter;
 import ru.lischenko_dev.fastmessenger.adapter.MessagesItem;
-import ru.lischenko_dev.fastmessenger.util.Account;
-import ru.lischenko_dev.fastmessenger.util.Utils;
+import ru.lischenko_dev.fastmessenger.util.VKAccount;
 import ru.lischenko_dev.fastmessenger.vkapi.Api;
 import ru.lischenko_dev.fastmessenger.vkapi.models.VKFullUser;
 import ru.lischenko_dev.fastmessenger.vkapi.models.VKMessage;
-import ru.lischenko_dev.fastmessenger.vkapi.models.VKUser;
 
 
 public class FragmentMessages extends Fragment implements SwipeRefreshLayout.OnRefreshListener {
 
 
     private ListView lv;
-    private Account account = new Account();
+    private VKAccount account;
     private Api api;
     private SwipeRefreshLayout swipeRefreshLayout;
     private ProgressBar progress;
@@ -48,30 +45,29 @@ public class FragmentMessages extends Fragment implements SwipeRefreshLayout.OnR
 
     @Override
     public void onRefresh() {
-            new DialogsGetter(true).execute();
+        new DialogsGetter(true).execute();
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        account.restore(getActivity());
+        account = VKAccount.get(getActivity().getApplicationContext());
         api = Api.init(account);
-        ((MainActivity) getActivity()).getSupportActionBar().setTitle(getString(R.string.messages_fragment));
+        ((MainActivity) getActivity()).getSupportActionBar().setTitle(getString(R.string.nav_messages));
         View view = inflater.inflate(R.layout.fragment_messages, container, false);
 
-
-        lv = (ListView) view.findViewById(R.id.lv);
-        progress = (ProgressBar) view.findViewById(R.id.progress);
+        lv = view.findViewById(R.id.lv);
+        progress = view.findViewById(R.id.progress);
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 MessagesItem item = (MessagesItem) parent.getItemAtPosition(position);
-                Intent intent = new Intent();
-                intent.setClass(getActivity(), ChatActivity.class);
-                intent.putExtra("uid", item.user.uid);
-                intent.putExtra("cid", item.message.chat_id);
-                intent.putExtra("avatar", item.message.isChat() ? item.message.photo_100 : item.user.photo_max_orig);
-                intent.putExtra("title", item.message.chat_id > 0 ? item.message.title : item.user.toString());
-                startActivity(intent);
+                Bundle b = new Bundle();
+                b.putLong("uid", item.user.uid);
+                b.putLong("cid", item.message.chat_id);
+                b.putString("title", item.message.chat_id > 0 ? item.message.title : item.user.toString());
+                FragmentChat chat = new FragmentChat();
+                chat.setArguments(b);
+                getFragmentManager().beginTransaction().replace(R.id.container, chat, "chat").commit();
             }
         });
 
@@ -84,10 +80,10 @@ public class FragmentMessages extends Fragment implements SwipeRefreshLayout.OnR
             }
         });
 
-        swipeRefreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.refresh);
+        swipeRefreshLayout = view.findViewById(R.id.refresh);
         swipeRefreshLayout.setOnRefreshListener(this);
         swipeRefreshLayout.setColorSchemeResources(R.color.colorAccent);
-		
+
         new DialogsGetter(true).execute();
         return view;
     }
@@ -166,10 +162,10 @@ public class FragmentMessages extends Fragment implements SwipeRefreshLayout.OnR
 
         public boolean withProgress;
 
-		public DialogsGetter(boolean withProgress) {
-			this.withProgress = withProgress;
-		}
-		
+        public DialogsGetter(boolean withProgress) {
+            this.withProgress = withProgress;
+        }
+
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
@@ -192,7 +188,7 @@ public class FragmentMessages extends Fragment implements SwipeRefreshLayout.OnR
                     mapUsers.put(msg.uid, null);
                 }
 
-                ArrayList<VKFullUser> apiProfiles = api.getProfiles(mapUsers.keySet(), null, VKUser.FIELDS_DEFAULT, null, null, null);
+                ArrayList<VKFullUser> apiProfiles = api.getProfiles(mapUsers.keySet(), null, "online, photo_50, photo_200", null, null, null);
                 mapUsers.clear();
                 for (VKFullUser user : apiProfiles) {
                     mapUsers.put(user.uid, user);

@@ -1,37 +1,23 @@
 package ru.lischenko_dev.fastmessenger;
 
-import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.PorterDuff;
-import android.graphics.drawable.ColorDrawable;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v7.widget.AppCompatEditText;
-import android.support.v7.widget.AppCompatImageButton;
-import android.support.v7.widget.DefaultItemAnimator;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ProgressBar;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-
-import ru.lischenko_dev.fastmessenger.adapter.ChatItems;
-import ru.lischenko_dev.fastmessenger.adapter.MessagesHistoryAdapter;
-import ru.lischenko_dev.fastmessenger.common.Account;
-import ru.lischenko_dev.fastmessenger.common.ThemeManager;
-import ru.lischenko_dev.fastmessenger.util.Utils;
-import ru.lischenko_dev.fastmessenger.vkapi.Api;
-import ru.lischenko_dev.fastmessenger.vkapi.models.VKFullUser;
-import ru.lischenko_dev.fastmessenger.vkapi.models.VKMessage;
+import android.content.*;
+import android.content.res.*;
+import android.graphics.*;
+import android.graphics.drawable.*;
+import android.os.*;
+import android.support.annotation.*;
+import android.support.v4.app.*;
+import android.support.v7.widget.*;
+import android.text.*;
+import android.util.*;
+import android.view.*;
+import android.widget.*;
+import java.util.*;
+import ru.lischenko_dev.fastmessenger.adapter.*;
+import ru.lischenko_dev.fastmessenger.common.*;
+import ru.lischenko_dev.fastmessenger.util.*;
+import ru.lischenko_dev.fastmessenger.vkapi.*;
+import ru.lischenko_dev.fastmessenger.vkapi.models.*;
 
 public class FragmentChat extends Fragment {
 
@@ -72,7 +58,8 @@ public class FragmentChat extends Fragment {
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
         layoutManager.setStackFromEnd(true);
-        recyclerView = rootView.findViewById(R.id.lv);
+		layoutManager.setSmoothScrollbarEnabled(true);
+        recyclerView = (RecyclerView) rootView.findViewById(R.id.lv);
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.setHasFixedSize(false);
 
@@ -90,6 +77,15 @@ public class FragmentChat extends Fragment {
                 return false;
             }
         });
+		
+		btnSmile.setOnClickListener(new View.OnClickListener() {
+
+				@Override
+				public void onClick(View p1) {
+					et.setText(et.getText().toString() + Constants.DARK_MOON);
+					et.setSelection(et.getText().length());
+				}
+		});
 
         et.addTextChangedListener(new TextWatcher() {
             @Override
@@ -161,11 +157,11 @@ public class FragmentChat extends Fragment {
     }
 
     private void initItems(View v) {
-        progress = v.findViewById(R.id.progress);
-        recyclerView = v.findViewById(R.id.lv);
-        et = v.findViewById(R.id.et);
-        btnSend = v.findViewById(R.id.btnSend);
-        btnSmile = v.findViewById(R.id.btnSmile);
+        progress = (ProgressBar) v.findViewById(R.id.progress);
+        recyclerView = (RecyclerView) v.findViewById(R.id.lv);
+        et = (AppCompatEditText) v.findViewById(R.id.et);
+        btnSend = (AppCompatImageButton) v.findViewById(R.id.btnSend);
+        btnSmile = (AppCompatImageButton) v.findViewById(R.id.btnSmile);
     }
 
     private class SendMessage extends AsyncTask<Void, Void, Void> {

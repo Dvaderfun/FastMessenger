@@ -1,30 +1,20 @@
 package ru.lischenko_dev.fastmessenger;
 
-import android.content.DialogInterface;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.widget.DefaultItemAnimator;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ProgressBar;
-import android.widget.Toast;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-
-import ru.lischenko_dev.fastmessenger.adapter.MessagesAdapter;
-import ru.lischenko_dev.fastmessenger.adapter.MessagesItem;
-import ru.lischenko_dev.fastmessenger.common.Account;
-import ru.lischenko_dev.fastmessenger.vkapi.Api;
-import ru.lischenko_dev.fastmessenger.vkapi.models.VKFullUser;
-import ru.lischenko_dev.fastmessenger.vkapi.models.VKMessage;
+import android.content.*;
+import android.content.res.*;
+import android.os.*;
+import android.support.v4.app.*;
+import android.support.v4.widget.*;
+import android.support.v7.app.*;
+import android.support.v7.widget.*;
+import android.util.*;
+import android.view.*;
+import android.widget.*;
+import java.util.*;
+import ru.lischenko_dev.fastmessenger.adapter.*;
+import ru.lischenko_dev.fastmessenger.common.*;
+import ru.lischenko_dev.fastmessenger.vkapi.*;
+import ru.lischenko_dev.fastmessenger.vkapi.models.*;
 
 
 public class FragmentMessages extends Fragment implements SwipeRefreshLayout.OnRefreshListener, MessagesAdapter.OnItemClickListener {
@@ -70,17 +60,18 @@ public class FragmentMessages extends Fragment implements SwipeRefreshLayout.OnR
         ((MainActivity) getActivity()).getSupportActionBar().setTitle(getString(R.string.nav_messages));
         View view = inflater.inflate(R.layout.fragment_messages, container, false);
 
-        recyclerView = view.findViewById(R.id.lv);
-        progress = view.findViewById(R.id.progress);
+        recyclerView = (RecyclerView) view.findViewById(R.id.lv);
+        progress = (ProgressBar) view.findViewById(R.id.progress);
 
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getActivity());
 
-        recyclerView = view.findViewById(R.id.lv);
+        recyclerView = (RecyclerView) view.findViewById(R.id.lv);
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.setHasFixedSize(true);
         recyclerView.setItemAnimator(new DefaultItemAnimator());
 
-        swipeRefreshLayout = view.findViewById(R.id.refresh);
+		
+        swipeRefreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.refresh);
         swipeRefreshLayout.setOnRefreshListener(this);
         swipeRefreshLayout.setColorSchemeResources(R.color.colorAccent);
 
@@ -196,6 +187,8 @@ public class FragmentMessages extends Fragment implements SwipeRefreshLayout.OnR
                         adapter.setListener(FragmentMessages.this);
                         recyclerView.setAdapter(adapter);
                         swipeRefreshLayout.setRefreshing(false);
+						recyclerView.scrollToPosition(adapter.getItemCount() - 2);
+						recyclerView.scrollToPosition(adapter.getItemCount());
                     }
                 });
             } catch (Exception e) {
@@ -213,6 +206,8 @@ public class FragmentMessages extends Fragment implements SwipeRefreshLayout.OnR
             }
         }
     }
+	
+	
 }
 
 

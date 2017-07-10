@@ -90,6 +90,7 @@ public class MessagesHistoryAdapter extends RecyclerView.Adapter<MessagesHistory
         final VKMessage message = item.msg;
         holder.mainContainer.setGravity(message.is_out ? Gravity.END : Gravity.START);
         ((LinearLayout) holder.bubble.getParent()).setGravity(message.is_out ? Gravity.END : Gravity.START);
+		holder.bodyGravity.setGravity(message.is_out ? Gravity.END : Gravity.START);
         final VKFullUser user = item.user;
         initListeners(holder.itemView, position);
         holder.tvBody.setText(message.body);
@@ -160,14 +161,15 @@ public class MessagesHistoryAdapter extends RecyclerView.Adapter<MessagesHistory
         LinearLayout mainContainer;
         LinearLayout bubble;
         ImageView ivAva;
+		LinearLayout bodyGravity;
 
         public ViewHolder(View v) {
             super(v);
-            tvBody = v.findViewById(R.id.tvBody);
-            mainContainer = v.findViewById(R.id.main_container);
-            bubble = v.findViewById(R.id.bodyContainer);
-            ivAva = v.findViewById(R.id.ivAva);
-
+            tvBody = (TextView) v.findViewById(R.id.tvBody);
+            mainContainer = (LinearLayout) v.findViewById(R.id.main_container);
+            bubble = (LinearLayout) v.findViewById(R.id.bodyContainer);
+            ivAva = (ImageView) v.findViewById(R.id.ivAva);
+			bodyGravity = (LinearLayout) v.findViewById(R.id.bodyGravity);
         }
 
         public boolean isFooter() {

@@ -40,17 +40,16 @@ public class FragmentFriends extends Fragment implements SwipeRefreshLayout.OnRe
 
         ((MainActivity) getActivity()).getSupportActionBar().setTitle(getString(R.string.nav_friends));
 
-        recyclerView = view.findViewById(R.id.lv);
-        progress = view.findViewById(R.id.progress);
+        recyclerView = (RecyclerView) view.findViewById(R.id.lv);
+        progress = (ProgressBar) view.findViewById(R.id.progress);
 
         RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(getActivity());
 
-        recyclerView = view.findViewById(R.id.lv);
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.setHasFixedSize(true);
         recyclerView.setItemAnimator(new DefaultItemAnimator());
 
-        swipeRefreshLayout = view.findViewById(R.id.refresh);
+        swipeRefreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.refresh);
         swipeRefreshLayout.setOnRefreshListener(this);
         swipeRefreshLayout.setColorSchemeResources(R.color.colorPrimary);
 

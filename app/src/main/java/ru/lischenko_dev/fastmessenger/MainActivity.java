@@ -32,6 +32,7 @@ import ru.lischenko_dev.fastmessenger.common.Account;
 import ru.lischenko_dev.fastmessenger.common.ThemeManager;
 import ru.lischenko_dev.fastmessenger.service.LongPollService;
 import ru.lischenko_dev.fastmessenger.util.Utils;
+import ru.lischenko_dev.fastmessenger.common.*;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -109,7 +110,8 @@ public class MainActivity extends AppCompatActivity {
                     ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, MainActivity.REQUEST_PERMISSIONS);
                 }
             }).show();
-        //OTAManager.get(this).checkOTAUpdates();
+		else
+        OTAManager.get(this).checkOTAUpdates();
 
     }
 

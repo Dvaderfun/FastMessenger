@@ -99,11 +99,11 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
 
         public ViewHolder(View v) {
             super(v);
-            ivOnline = v.findViewById(R.id.ivOnline);
-            tvOnline = v.findViewById(R.id.tvOnline);
+            ivOnline = (ImageView) v.findViewById(R.id.ivOnline);
+            tvOnline = (TextView) v.findViewById(R.id.tvOnline);
             hr = v.findViewById(R.id.hr);
-            tvName = v.findViewById(R.id.tvName);
-            ivAva = v.findViewById(R.id.ivAva);
+            tvName = (TextView) v.findViewById(R.id.tvName);
+            ivAva = (ImageView) v.findViewById(R.id.ivAva);
 
         }
     }

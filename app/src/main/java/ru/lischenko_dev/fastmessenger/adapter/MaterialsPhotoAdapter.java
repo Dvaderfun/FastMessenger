@@ -55,7 +55,7 @@ public class MaterialsPhotoAdapter extends BaseAdapter {
             v = inflater.inflate(R.layout.materials_photo_list, viewGroup, false);
         }
 
-        ImageView iv = v.findViewById(R.id.photo);
+        ImageView iv = (ImageView) v.findViewById(R.id.photo);
         Picasso.with(context)
                 .load(item.attachment.photo.src_big)
                 .resize(App.screenWidth / 3, App.screenWidth / 3)

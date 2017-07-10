@@ -32,8 +32,8 @@ public class FragmentMaterialsAudio extends Fragment {
         uid = getActivity().getIntent().getExtras().getLong("uid");
         cid = getActivity().getIntent().getExtras().getLong("cid");
         View rootView = inflater.inflate(R.layout.materials_audio, container, false);
-        lv = rootView.findViewById(R.id.lv);
-        progressBar = rootView.findViewById(R.id.progress);
+        lv = (ListView) rootView.findViewById(R.id.lv);
+        progressBar = (ProgressBar) rootView.findViewById(R.id.progress);
         account = Account.get(getActivity());
         api = Api.init(account);
         new getAudios().execute();

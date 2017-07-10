@@ -36,8 +36,8 @@ public class FragmentMaterialsVideo extends Fragment {
         uid = getActivity().getIntent().getExtras().getLong("uid");
         cid = getActivity().getIntent().getExtras().getLong("cid");
         View rootView = inflater.inflate(R.layout.materials_video, container, false);
-        gv = rootView.findViewById(R.id.gv);
-        progressBar = rootView.findViewById(R.id.progress);
+        gv = (GridView) rootView.findViewById(R.id.gv);
+        progressBar = (ProgressBar) rootView.findViewById(R.id.progress);
         gv.setNumColumns(2);
         gv.setVerticalSpacing(4);
         gv.setHorizontalSpacing(4);

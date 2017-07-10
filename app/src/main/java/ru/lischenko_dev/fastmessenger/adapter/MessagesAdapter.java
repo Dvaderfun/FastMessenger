@@ -215,15 +215,15 @@ public class MessagesAdapter extends RecyclerView.Adapter<MessagesAdapter.ViewHo
 
         public ViewHolder(View v) {
             super(v);
-            tvBody = v.findViewById(R.id.tvBody);
-            tvDate = v.findViewById(R.id.tvDate);
-            ivAva = v.findViewById(R.id.ivAva);
-            ivAvaSmall = v.findViewById(R.id.ivAvaSmall);
-            tvName = v.findViewById(R.id.tvName);
-            ivOnline = v.findViewById(R.id.ivOnline);
-            rl = v.findViewById(R.id.main_container);
-            ivChat = v.findViewById(R.id.ivChat);
-            counter = v.findViewById(R.id.ivCount);
+            tvBody = (TextView) v.findViewById(R.id.tvBody);
+            tvDate = (TextView) v.findViewById(R.id.tvDate);
+            ivAva = (CircleImageView) v.findViewById(R.id.ivAva);
+            ivAvaSmall = (ImageView) v.findViewById(R.id.ivAvaSmall);
+            tvName = (TextView) v.findViewById(R.id.tvName);
+            ivOnline = (CircleView) v.findViewById(R.id.ivOnline);
+            rl = (LinearLayout) v.findViewById(R.id.main_container);
+            ivChat = (ImageView) v.findViewById(R.id.ivChat);
+            counter = (CircleView) v.findViewById(R.id.ivCount);
             hr = v.findViewById(R.id.hr);
 
         }

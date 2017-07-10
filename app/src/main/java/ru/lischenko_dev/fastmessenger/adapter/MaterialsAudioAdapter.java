@@ -50,8 +50,8 @@ public class MaterialsAudioAdapter extends BaseAdapter {
         }
 
 
-        TextView tvTitle = v.findViewById(R.id.tvTitle);
-        TextView tvArtist = v.findViewById(R.id.tvArtist);
+        TextView tvTitle = (TextView)v.findViewById(R.id.tvTitle);
+        TextView tvArtist = (TextView) v.findViewById(R.id.tvArtist);
 
         tvTitle.setTextColor(manager.getPrimaryTextColor());
         tvArtist.setTextColor(manager.getSecondaryTextColor());

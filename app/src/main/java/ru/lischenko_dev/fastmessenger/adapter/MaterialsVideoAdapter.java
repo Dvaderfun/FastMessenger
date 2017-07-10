@@ -58,10 +58,10 @@ public class MaterialsVideoAdapter extends BaseAdapter {
             v = inflater.inflate(R.layout.materials_video_list, viewGroup, false);
         }
 
-        ImageView ivPreview = v.findViewById(R.id.photo);
-        TextView tvTitle = v.findViewById(R.id.tvTitle);
-        TextView tvViews = v.findViewById(R.id.tvSee);
-        TextView tvDate = v.findViewById(R.id.tvDate);
+        ImageView ivPreview = (ImageView) v.findViewById(R.id.photo);
+        TextView tvTitle = (TextView) v.findViewById(R.id.tvTitle);
+        TextView tvViews = (TextView) v.findViewById(R.id.tvSee);
+        TextView tvDate = (TextView) v.findViewById(R.id.tvDate);
 
         tvTitle.setText(video.title);
         tvViews.setText(String.valueOf(video.views));

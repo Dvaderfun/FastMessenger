@@ -60,11 +60,11 @@ public class MaterialsDocAdapter extends BaseAdapter {
         }
 
 
-        TextView tvTitle = view.findViewById(R.id.tvTitle);
-        TextView tvSize = view.findViewById(R.id.tvArtist);
+        TextView tvTitle = (TextView) view.findViewById(R.id.tvTitle);
+        TextView tvSize = (TextView) view.findViewById(R.id.tvArtist);
 
         tvTitle.setTextColor(manager.getPrimaryTextColor());
-        ImageView ivDoc = view.findViewById(R.id.ivDoc);
+        ImageView ivDoc = (ImageView) view.findViewById(R.id.ivDoc);
 
         if (doc.isImage())
             Picasso.with(context).load(doc.photo_130).placeholder(new ColorDrawable(manager.isDarkTheme() ? Color.LTGRAY : Color.DKGRAY)).into(ivDoc);

@@ -41,7 +41,8 @@ public class StartActivity extends AppCompatActivity {
 
         if (Utils.getPrefs(this).getBoolean("show_login", true)) {
             if (Utils.hasConnection(this)) {
-                account = Account.get(this).restore();
+                account = Account.get(this);
+				account.restore();
                 setContentView(R.layout.activity_start);
                 (findViewById(R.id.downLLStart)).setBackgroundColor(ThemeManager.get(this).getSecondaryBackgroundColor());
                 btnAuth = (Button) findViewById(R.id.btnLogin);
@@ -87,7 +88,7 @@ public class StartActivity extends AppCompatActivity {
             }
         } else {
             if (Utils.hasConnection(this)) {
-                account = new Account(this);
+                account = Account.get(this);
                 if (account.user_id == 0)
                     startActivityForResult(new Intent(this, LoginActivity.class), MainActivity.REQUEST_LOGIN);
                 else

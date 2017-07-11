@@ -2,10 +2,19 @@
 <resources>
     <color name="colorPrimary">#1565c0</color>
     <color name="colorPrimaryDark">#11519a</color>
-    <color name="colorAccent">#1565c0</color>
+    <color name="colorAccent">@color/colorPrimary</color>
+	
+	<color name="darkColorPrimary">#13509C</color>
+	<color name="darkColorPrimaryDark">#14417F</color>
+	<color name="darkColorAccent">@color/darkColorPrimary</color>
+	
 	<color name="colorSecondary">#196DD4</color>
     <color name="colorSecondaryLight">#2279E3</color>
+	
+	
 	<color name="online">#7BB865</color>
+	
+	
 	<color name="backgroundLight">#ffffff</color>
 	<color name="backgroundDark">#202020</color>
 </resources>

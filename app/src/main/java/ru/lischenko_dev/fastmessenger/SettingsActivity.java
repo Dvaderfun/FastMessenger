@@ -1,22 +1,20 @@
 package ru.lischenko_dev.fastmessenger;
 
-import android.content.Intent;
-import android.os.Bundle;
-import android.preference.EditTextPreference;
-import android.preference.Preference;
-import android.support.v4.app.TaskStackBuilder;
-import android.view.MenuItem;
-
-import ru.lischenko_dev.fastmessenger.common.OTAManager;
-import ru.lischenko_dev.fastmessenger.common.ThemeManager;
-import ru.lischenko_dev.fastmessenger.util.AppCompatPreferenceActivity;
-import ru.lischenko_dev.fastmessenger.util.Utils;
+import android.content.*;
+import android.os.*;
+import android.preference.*;
+import android.support.v4.app.*;
+import android.view.*;
+import java.lang.reflect.*;
+import ru.lischenko_dev.fastmessenger.common.*;
+import ru.lischenko_dev.fastmessenger.util.*;
 
 public class SettingsActivity extends AppCompatPreferenceActivity implements Preference.OnPreferenceClickListener, Preference.OnPreferenceChangeListener {
 
     private Preference template;
     private EditTextPreference template_edit;
-
+	
+	
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setTheme(ThemeManager.get(this).getCurrentActionBarTheme());
@@ -33,12 +31,14 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Pre
         (findPreference("dark_theme")).setOnPreferenceChangeListener(this);
     }
 
+	
+	
     @Override
     public boolean onPreferenceChange(android.preference.Preference p1, Object p2) {
         switch (p1.getKey()) {
             case "dark_theme":
                 ThemeManager.get(getApplicationContext()).putTheme((boolean) p2);
-                TaskStackBuilder.create(getApplicationContext()).addNextIntent(new Intent(getApplicationContext(), MainActivity.class)).addNextIntent(getIntent()).startActivities();
+                TaskStackBuilder.create(getApplicationContext()).addNextIntent(new Intent(getApplicationContext(), StartActivity.class)).addNextIntent(new Intent(getApplicationContext(), MainActivity.class)).addNextIntent(getIntent()).startActivities();
                 overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
                 break;
             case "template":

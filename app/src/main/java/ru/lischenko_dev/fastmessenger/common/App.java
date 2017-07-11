@@ -10,6 +10,8 @@ import org.acra.annotation.ReportsCrashes;
 
 import ru.lischenko_dev.fastmessenger.service.LongPollService;
 import ru.lischenko_dev.fastmessenger.util.Utils;
+import ch.acra.acra.*;
+import android.os.*;
 
 
 @ReportsCrashes(mailTo = "lischenkodev@gmail.com",
@@ -24,6 +26,7 @@ public class App extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        if(!Build.BRAND.toLowerCase().contains("xiaomi"))
         ACRA.init(this);
         context = getApplicationContext();
         screenHeight = Utils.getDisplayHeight(this);

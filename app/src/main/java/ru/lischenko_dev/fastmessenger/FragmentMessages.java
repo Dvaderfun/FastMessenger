@@ -17,7 +17,7 @@ import ru.lischenko_dev.fastmessenger.vkapi.*;
 import ru.lischenko_dev.fastmessenger.vkapi.models.*;
 
 
-public class FragmentMessages extends Fragment implements SwipeRefreshLayout.OnRefreshListener, MessagesAdapter.OnItemClickListener {
+public class FragmentMessages extends Fragment implements SwipeRefreshLayout.OnRefreshListener, MessageAdapter.OnItemClickListener {
 
 
     private RecyclerView recyclerView;
@@ -25,15 +25,15 @@ public class FragmentMessages extends Fragment implements SwipeRefreshLayout.OnR
     private Api api;
     private SwipeRefreshLayout swipeRefreshLayout;
     private ProgressBar progress;
-    private MessagesAdapter adapter;
-    private ArrayList<MessagesItem> items;
+    private MessageAdapter adapter;
+    private ArrayList<MessageItem> items;
 
     public FragmentMessages() {
     }
 
     @Override
     public void onItemClick(View view, int position) {
-        MessagesItem item = items.get(position);
+        MessageItem item = items.get(position);
         Bundle b = new Bundle();
         b.putLong("uid", item.user.uid);
         b.putLong("cid", item.message.chat_id);
@@ -55,6 +55,7 @@ public class FragmentMessages extends Fragment implements SwipeRefreshLayout.OnR
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+		getActivity().invalidateOptionsMenu();
         account = Account.get(getActivity());
         api = Api.init(account);
         ((MainActivity) getActivity()).getSupportActionBar().setTitle(getString(R.string.nav_messages));
@@ -79,7 +80,7 @@ public class FragmentMessages extends Fragment implements SwipeRefreshLayout.OnR
         return view;
     }
 
-    private void showDialog(final MessagesItem item) {
+    private void showDialog(final MessageItem item) {
         String[] items = new String[]{
                 getString(R.string.clean_history)
         };
@@ -109,7 +110,7 @@ public class FragmentMessages extends Fragment implements SwipeRefreshLayout.OnR
     }
 
 
-    private void deleteMessages(final MessagesItem item) {
+    private void deleteMessages(final MessageItem item) {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -179,11 +180,11 @@ public class FragmentMessages extends Fragment implements SwipeRefreshLayout.OnR
                 for (VKFullUser user : apiProfiles)
                     mapUsers.put(user.uid, user);
                 for (VKMessage msg : dialogs)
-                    items.add(new MessagesItem(msg, mapUsers.get(msg.uid)));
+                    items.add(new MessageItem(msg, mapUsers.get(msg.uid)));
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        MessagesAdapter adapter = new MessagesAdapter(items, getActivity());
+                        MessageAdapter adapter = new MessageAdapter(items, getActivity());
                         adapter.setListener(FragmentMessages.this);
                         recyclerView.setAdapter(adapter);
                         swipeRefreshLayout.setRefreshing(false);

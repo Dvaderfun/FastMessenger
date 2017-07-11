@@ -34,6 +34,7 @@ public class FragmentFriends extends Fragment implements SwipeRefreshLayout.OnRe
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+		getActivity().invalidateOptionsMenu();
         account = Account.get(getActivity());
         api = new Api(account.access_token, Constants.API_ID);
         View view = inflater.inflate(R.layout.fragment_friends, container, false);

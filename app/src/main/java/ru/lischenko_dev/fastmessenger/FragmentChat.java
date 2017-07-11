@@ -24,8 +24,8 @@ public class FragmentChat extends Fragment {
     public long uid, cid;
     private Account account;
     private Api api;
-    private ArrayList<ChatItems> items;
-    private MessagesHistoryAdapter adapter;
+    private ArrayList<MessageHistoryItems> items;
+    private MessageHistoryAdapter adapter;
     private RecyclerView recyclerView;
     private AppCompatImageButton btnSend, btnSmile;
     private AppCompatEditText et;
@@ -39,12 +39,12 @@ public class FragmentChat extends Fragment {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+		getActivity().invalidateOptionsMenu();
         initExtraItems();
 
         rootView = inflater.inflate(R.layout.fragment_chat, container, false);
         manager = ThemeManager.get(getActivity());
 
-        getActivity().invalidateOptionsMenu();
         getActivity().getWindow().setBackgroundDrawable(new ColorDrawable(manager.getSecondaryBackgroundColor()));
         (rootView.findViewById(R.id.chat_panel)).getBackground().setColorFilter(manager.getPanelColor(), PorterDuff.Mode.MULTIPLY);
         account = Account.get(getActivity());
@@ -177,8 +177,8 @@ public class FragmentChat extends Fragment {
             message.is_out = true;
             message.date = System.currentTimeMillis() / 1000;
             final VKFullUser user = api.getProfile(account.user_id);
-            final ChatItems[] messageItem = new ChatItems[1];
-            messageItem[0] = new ChatItems(message, user);
+            final MessageHistoryItems[] messageItem = new MessageHistoryItems[1];
+            messageItem[0] = new MessageHistoryItems(message, user);
             items.add(messageItem[0]);
             adapter.notifyDataSetChanged();
             recyclerView.smoothScrollToPosition(adapter.getItemCount());
@@ -189,8 +189,8 @@ public class FragmentChat extends Fragment {
             try {
                 message.mid = api.sendMessage(uid, cid, msg_text, null, null, null, null, null, null, null, null);
                 final VKFullUser user = api.getProfile(account.user_id);
-                final ChatItems[] messageItem = new ChatItems[1];
-                messageItem[1] = new ChatItems(message, user);
+                final MessageHistoryItems[] messageItem = new MessageHistoryItems[1];
+                messageItem[1] = new MessageHistoryItems(message, user);
                 items.add(messageItem[1]);
                 adapter.notifyDataSetChanged();
                 recyclerView.smoothScrollToPosition(adapter.getItemCount());
@@ -243,13 +243,13 @@ public class FragmentChat extends Fragment {
 
                 for (VKMessage msg : dialogs) {
                     VKFullUser user = mapUsers.get(msg.uid);
-                    items.add(0, new ChatItems(msg, user));
+                    items.add(0, new MessageHistoryItems(msg, user));
                 }
                 getActivity().runOnUiThread(new Runnable() {
 
                     @Override
                     public void run() {
-                        adapter = new MessagesHistoryAdapter(items, getActivity().getApplicationContext());
+                        adapter = new MessageHistoryAdapter(items, getActivity().getApplicationContext());
                         recyclerView.setAdapter(adapter);
                         recyclerView.scrollToPosition(adapter.getItemCount());
                         if (cid > 0)

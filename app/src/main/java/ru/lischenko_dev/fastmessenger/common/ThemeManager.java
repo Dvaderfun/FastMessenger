@@ -32,7 +32,7 @@ public class ThemeManager {
     }
 
     public int getPrimaryColor() {
-        return 0xff1565c0;
+        return isDarkTheme() ? 0xff13509C : 0xff1565c0;
     }
 
     public int getInBubbleColor() {
@@ -44,7 +44,7 @@ public class ThemeManager {
     }
 
     public int getPrimaryDarkColor() {
-        return 0xff11519a;
+        return isDarkTheme() ? 0xff14417f : 0xff11519a;
     }
 
     public int getAccentColor() {

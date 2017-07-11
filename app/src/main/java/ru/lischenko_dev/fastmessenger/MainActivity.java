@@ -1,38 +1,29 @@
 package ru.lischenko_dev.fastmessenger;
 
-import android.Manifest;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.graphics.Color;
-import android.graphics.PorterDuff;
-import android.os.Build;
-import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.design.widget.NavigationView;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.ImageView;
-import android.widget.TextView;
-
-import com.squareup.picasso.Picasso;
-
-import ru.lischenko_dev.fastmessenger.common.Account;
-import ru.lischenko_dev.fastmessenger.common.ThemeManager;
-import ru.lischenko_dev.fastmessenger.service.LongPollService;
-import ru.lischenko_dev.fastmessenger.util.Utils;
+import android.*;
+import android.content.*;
+import android.content.pm.*;
+import android.graphics.*;
+import android.os.*;
+import android.support.annotation.*;
+import android.support.design.widget.*;
+import android.support.v4.app.*;
+import android.support.v4.content.*;
+import android.support.v4.view.*;
+import android.support.v4.widget.*;
+import android.support.v7.app.*;
+import android.support.v7.widget.*;
+import android.view.*;
+import android.widget.*;
+import com.squareup.picasso.*;
+import java.lang.reflect.*;
 import ru.lischenko_dev.fastmessenger.common.*;
+import ru.lischenko_dev.fastmessenger.service.*;
+import ru.lischenko_dev.fastmessenger.util.*;
+
+import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.widget.Toolbar;
+import ru.lischenko_dev.fastmessenger.util.Utils;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -62,7 +53,7 @@ public class MainActivity extends AppCompatActivity {
             getWindow().setNavigationBarColor(ThemeManager.get(this).getPrimaryColor());
             toolbar.setElevation(8);
         }
-
+		
         requestPermissionsForWrite();
 
         if (Utils.hasConnection(this)) {
@@ -144,7 +135,7 @@ public class MainActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == MainActivity.REQUEST_PERMISSIONS) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED)
-                return;//OTAManager.get(MainActivity.this).checkOTAUpdates();
+                OTAManager.get(MainActivity.this).checkOTAUpdates();
             else
                 Snackbar.make(drawerLayout, R.string.cant_work_without_permissions, 10000).setAction(R.string.grant_permissions, new View.OnClickListener() {
                     @Override
@@ -197,7 +188,7 @@ public class MainActivity extends AppCompatActivity {
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, R.string.app_name, R.string.app_name);
         toggle.getDrawerArrowDrawable().setColor(Color.WHITE);
         drawerLayout.addDrawerListener(toggle);
-        toggle.syncState();
+		toggle.syncState();
     }
 
     @Override

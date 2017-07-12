@@ -18,13 +18,11 @@
             android:layout_gravity="center"
             android:visibility="gone" />
 
-        <android.support.v7.widget.RecyclerView
+        <ListView
             android:id="@+id/lv"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:dividerHeight="-1dp"
-            android:gravity="top"
-            android:smoothScrollbar="true" />
+            android:dividerHeight="-1dp" />
 
         <LinearLayout
             android:id="@+id/chat_panel"

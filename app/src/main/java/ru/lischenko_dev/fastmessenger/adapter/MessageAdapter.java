@@ -29,11 +29,11 @@ import java.util.ArrayList;
 import ru.lischenko_dev.fastmessenger.R;
 import ru.lischenko_dev.fastmessenger.common.Account;
 import ru.lischenko_dev.fastmessenger.common.ThemeManager;
-import ru.lischenko_dev.fastmessenger.view.CircleImageView;
 import ru.lischenko_dev.fastmessenger.view.CircleView;
 import ru.lischenko_dev.fastmessenger.vkapi.VKUtils;
 import ru.lischenko_dev.fastmessenger.vkapi.models.VKAttachment;
 import ru.lischenko_dev.fastmessenger.vkapi.models.VKMessage;
+import de.hdodenhof.circleimageview.*;
 
 public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.ViewHolder> {
 
@@ -91,7 +91,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.ViewHold
         MessageItem item = items.get(position);
         manager.setHrBackgroundColor(holder.hr);
         holder.ivChat.setVisibility(item.message.isChat() ? View.VISIBLE : View.GONE);
-
+		
         holder.counter.setVisibility(!item.message.is_out && !item.message.read_state ? View.VISIBLE : View.GONE);
         holder.counter.setCircleColor(0xff1565c0);
         holder.counter.setText(String.valueOf(item.message.unread));
@@ -103,6 +103,8 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.ViewHold
             holder.counter.setText(count.substring(0, 1) + "K+");
         } else if (count.length() > 2)
             holder.counter.setTextSize(10);
+			
+		
 
         holder.tvName.setTextColor(manager.getPrimaryTextColor());
         holder.tvBody.setTextColor(manager.getSecondaryTextColor());
@@ -112,7 +114,8 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.ViewHold
         holder.tvDate.setText(new SimpleDateFormat("HH:mm").format(item.message.date * 1000));
 
         holder.rl.setBackgroundDrawable(item.message.read_state ? null : item.message.is_out ? context.getResources().getDrawable(R.drawable.ic_not_read_body) : null);
-
+		
+		
         if (holder.rl.getBackground() != null)
             holder.rl.getBackground().setColorFilter(manager.getUnreadColor(), PorterDuff.Mode.MULTIPLY);
 
@@ -125,13 +128,14 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.ViewHold
             Log.e("АААААААА ОШИИИИИБКААААА", e.toString());
         }
 
-        try {
-            holder.ivOnline.setVisibility(View.GONE);
-            if (!item.message.isChat())
-                holder.ivOnline.setVisibility(item.user.online ? View.VISIBLE : View.GONE);
-            else
-                holder.ivOnline.setVisibility(View.GONE);
-            holder.ivAvaSmall.setVisibility(item.message.isChat() ? View.VISIBLE : item.message.is_out ? View.VISIBLE : View.GONE);
+        
+		holder.ivAvaSmall.setVisibility(item.message.isChat() ? View.VISIBLE : item.message.is_out ? View.VISIBLE : View.GONE);
+		holder.ivOnline.setVisibility(item.message.isChat() ? View.GONE : item.user.online ? View.VISIBLE : View.GONE);
+		if(!item.message.isChat())
+		try {
+            holder.ivOnline.setVisibility(item.user.online ? View.VISIBLE : View.GONE);
+			holder.ivOnline.setBorderColor(manager.isDarkTheme() ? 0xff212121 : 0xffffffff);
+			holder.ivOnline.setBorderWidth(2);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -140,9 +144,6 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.ViewHold
         if (item.message.body.length() == 0)
             if (!item.message.attachments.isEmpty()) {
                 for (VKAttachment att : item.message.attachments) {
-                    //viewHolder.tvBody.setText(VKUtils.getStringAttachment(att.type));
-                    //Spannable text = new SpannableString(attachment);
-                    // text.setSpan(new StyleSpan(Typeface.BOLD), 0, attachment.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                     holder.tvBody.setText(Html.fromHtml(String.format("<b>%s</b>", VKUtils.getStringAttachment(att.type))));
                     holder.tvBody.setTextColor(context.getResources().getColor(R.color.colorPrimary));
                 }
@@ -204,10 +205,10 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.ViewHold
     public static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvBody;
         TextView tvDate;
-        CircleImageView ivAva;
+        ImageView ivAva;
         ImageView ivAvaSmall;
         TextView tvName;
-        CircleView ivOnline;
+        CircleImageView ivOnline;
         LinearLayout rl;
         ImageView ivChat;
         CircleView counter;
@@ -217,15 +218,14 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.ViewHold
             super(v);
             tvBody = (TextView) v.findViewById(R.id.tvBody);
             tvDate = (TextView) v.findViewById(R.id.tvDate);
-            ivAva = (CircleImageView) v.findViewById(R.id.ivAva);
+            ivAva = (ImageView) v.findViewById(R.id.ivAva);
             ivAvaSmall = (ImageView) v.findViewById(R.id.ivAvaSmall);
             tvName = (TextView) v.findViewById(R.id.tvName);
-            ivOnline = (CircleView) v.findViewById(R.id.ivOnline);
+            ivOnline = (CircleImageView) v.findViewById(R.id.ivOnline);
             rl = (LinearLayout) v.findViewById(R.id.main_container);
             ivChat = (ImageView) v.findViewById(R.id.ivChat);
             counter = (CircleView) v.findViewById(R.id.ivCount);
             hr = v.findViewById(R.id.hr);
-
         }
     }
 }

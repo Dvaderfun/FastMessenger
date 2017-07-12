@@ -25,7 +25,7 @@ import android.support.v4.*;
 public class OTAManager
 {
 
-    public final String app_version = "0.8.4";
+    public final String app_version = "0.8.5";
     public final String json_url = "http://advteam.3dn.ru/fvk.json";
 	
     private Context context;
@@ -61,7 +61,7 @@ public class OTAManager
 					{
 						JSONObject root = JSONParser.parseObject(json_url, "utf-8");
 						newVersion = root.optString("version");
-						newChangelog = null;
+						newChangelog = root.optString("changelog");
 						if(newChangelog == null)
 							newChangelog = "null. this bad";
 						((Activity) context).runOnUiThread(new Runnable() {
@@ -152,7 +152,7 @@ public class OTAManager
 				}
 			});
 
-		((TextView) v.findViewById(R.id.tvChangelog)).setText("Version: " + newVersion + "\n" + "Тут должен быть чейнджлог. Но его нет.");
+		((TextView) v.findViewById(R.id.tvChangelog)).setText("Version: " + newVersion + "\nChangelog" + newChangelog);
         ((TextView) v.findViewById(R.id.tvTitle)).setText("New OTA Version!");
         dialog.setContentView(v);
         dialog.setCancelable(true);

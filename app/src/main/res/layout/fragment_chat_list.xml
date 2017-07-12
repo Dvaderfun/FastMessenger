@@ -31,9 +31,7 @@
 			android:layout_marginStart="4dp"
 			android:gravity="center_vertical"
 			android:minHeight="30dp"
-			android:orientation="vertical"
-			android:paddingBottom="9dp"
-			android:paddingTop="9dp">
+			android:orientation="vertical">
 
 			<TextView
 				android:id="@+id/tvBody"
@@ -42,22 +40,18 @@
 				android:autoLink="web"
 				android:gravity="start|center"
 				android:linksClickable="true"
-				android:paddingLeft="9dp"
-				android:paddingRight="9dp"
-				tools:text="СообщенeqfqOFNwefnqo;FENOwjfnowjfnowjenfojwfeNOwpjenfojpwFENOwfnowjNFowfnwojFNWopjenfpwoenfowjFNWjofnwojFNWOJNFOWJFNOwjfnowjFNwnfие"/>
+				tools:text="СообщенeqfqOFNwefnqo;FENOwjfnowjfnowjenfojwfeNOwpjenfojpwFENOwfnowjNFowfnwojFNWopjenfpwoenfowjFNWjofnwojFNWOJNFOWJFNOwjfnowjFNwnfие"
+				android:padding="10dp"/>
 
-			<LinearLayout
-				android:id="@+id/attach_container"
-				android:layout_width="wrap_content"
-				android:layout_height="wrap_content"
-				android:orientation="vertical"
-				android:visibility="gone">
-
-			</LinearLayout>
+			
 
 		</LinearLayout>
 
 	</LinearLayout>
-
+	<LinearLayout
+		android:id="@+id/attach_container"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:visibility="gone"/>
 </LinearLayout>
 

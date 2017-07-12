@@ -26,7 +26,7 @@ public class FragmentChat extends Fragment {
     private Api api;
     private ArrayList<MessageHistoryItems> items;
     private MessageHistoryAdapter adapter;
-    private RecyclerView recyclerView;
+    private ListView lv;
     private AppCompatImageButton btnSend, btnSmile;
     private AppCompatEditText et;
     private ProgressBar progress;
@@ -52,21 +52,23 @@ public class FragmentChat extends Fragment {
 
 
         initItems(rootView);
+		
         et.setHintTextColor(manager.getEditTextColor());
         et.setTextColor(manager.getEditTextColor());
-
-
-        LinearLayoutManager layoutManager = new LinearLayoutManager(getActivity());
-        layoutManager.setStackFromEnd(true);
-		layoutManager.setSmoothScrollbarEnabled(true);
-        recyclerView = (RecyclerView) rootView.findViewById(R.id.lv);
-        recyclerView.setLayoutManager(layoutManager);
-        recyclerView.setHasFixedSize(false);
-
-        recyclerView.setItemAnimator(new DefaultItemAnimator());
+		
         btnSend.setColorFilter(Color.GRAY);
-
-        btnSmile.setOnLongClickListener(new View.OnLongClickListener() {
+		
+		View footer = new View(getActivity());
+		footer.setVisibility(View.VISIBLE);
+		footer.setBackgroundColor(Color.TRANSPARENT);
+		footer.setVisibility(View.INVISIBLE);
+		footer.setEnabled(false);
+		footer.setClickable(false);
+		footer.setLayoutParams(new AbsListView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, (int) Utils.convertDpToPixel(getActivity(), 75)));
+		
+		lv.addFooterView(footer);
+        
+		btnSmile.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View view) {
                 String template = Utils.getPrefs(getActivity()).getString("template", "");
@@ -158,7 +160,7 @@ public class FragmentChat extends Fragment {
 
     private void initItems(View v) {
         progress = (ProgressBar) v.findViewById(R.id.progress);
-        recyclerView = (RecyclerView) v.findViewById(R.id.lv);
+        lv = (ListView) v.findViewById(R.id.lv);
         et = (AppCompatEditText) v.findViewById(R.id.et);
         btnSend = (AppCompatImageButton) v.findViewById(R.id.btnSend);
         btnSmile = (AppCompatImageButton) v.findViewById(R.id.btnSmile);
@@ -181,7 +183,7 @@ public class FragmentChat extends Fragment {
             messageItem[0] = new MessageHistoryItems(message, user);
             items.add(messageItem[0]);
             adapter.notifyDataSetChanged();
-            recyclerView.smoothScrollToPosition(adapter.getItemCount());
+            lv.smoothScrollToPosition(adapter.getCount());
         }
 
         @Override
@@ -193,7 +195,7 @@ public class FragmentChat extends Fragment {
                 messageItem[1] = new MessageHistoryItems(message, user);
                 items.add(messageItem[1]);
                 adapter.notifyDataSetChanged();
-                recyclerView.smoothScrollToPosition(adapter.getItemCount());
+                lv.smoothScrollToPosition(adapter.getCount());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -204,7 +206,7 @@ public class FragmentChat extends Fragment {
         protected void onPostExecute(Void result) {
             super.onPostExecute(result);
             adapter.notifyDataSetChanged();
-            recyclerView.smoothScrollToPosition(adapter.getItemCount());
+            lv.smoothScrollToPosition(adapter.getCount());
 
         }
     }
@@ -220,7 +222,7 @@ public class FragmentChat extends Fragment {
         protected void onPreExecute() {
             super.onPreExecute();
             if (withProgress) {
-                recyclerView.setVisibility(View.INVISIBLE);
+                lv.setVisibility(View.INVISIBLE);
                 progress.setVisibility(View.VISIBLE);
             }
         }
@@ -250,8 +252,8 @@ public class FragmentChat extends Fragment {
                     @Override
                     public void run() {
                         adapter = new MessageHistoryAdapter(items, getActivity().getApplicationContext());
-                        recyclerView.setAdapter(adapter);
-                        recyclerView.scrollToPosition(adapter.getItemCount());
+                        lv.setAdapter(adapter);
+                        lv.setSelection(adapter.getCount());
                         if (cid > 0)
                             ((MainActivity) getActivity()).getToolbar().setOnClickListener(new View.OnClickListener() {
                                 @Override
@@ -273,7 +275,7 @@ public class FragmentChat extends Fragment {
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
             if (withProgress) {
-                recyclerView.setVisibility(View.VISIBLE);
+                lv.setVisibility(View.VISIBLE);
                 progress.setVisibility(View.GONE);
             }
         }

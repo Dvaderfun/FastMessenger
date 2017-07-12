@@ -128,37 +128,7 @@ public class Api {
         return mSingleton;
     }
 
-    public static String sendRequestInternal(String url, String body, boolean is_post) throws IOException {
-        HttpURLConnection connection = null;
-        try {
-            connection = (HttpURLConnection) new URL(url).openConnection();
-            connection.setConnectTimeout(30000);
-            connection.setReadTimeout(30000);
-            connection.setUseCaches(false);
-            connection.setDoOutput(is_post);
-            connection.setDoInput(true);
-            connection.setRequestMethod(is_post ? "POST" : "GET");
-            if (enable_compression)
-                connection.setRequestProperty("Accept-Encoding", "gzip");
-            if (is_post)
-                connection.getOutputStream().write(body.getBytes("UTF-8"));
-            int code = connection.getResponseCode();
-            Log.i(TAG, "code=" + code);
-            //It may happen due to keep-alive problem http://stackoverflow.com/questions/1440957/httpurlconnection-getresponsecode-returns-1-on-second-invocation
-            if (code == -1)
-                throw new WrongResponseCodeException("Network error");
-            //может стоит проверить на код 200
-            //on error can also read error stream from connection.
-            InputStream is = new BufferedInputStream(connection.getInputStream(), 8192);
-            String enc = connection.getHeaderField("Content-Encoding");
-            if (enc != null && enc.equalsIgnoreCase("gzip"))
-                is = new GZIPInputStream(is);
-            return VKUtils.convertStreamToString(is);
-        } finally {
-            if (connection != null)
-                connection.disconnect();
-        }
-    }
+    
 
     public static String unescape(String text) {
         if (text == null)
@@ -262,12 +232,8 @@ public class Api {
             throw e;
         }
     }
-
-    public JSONObject sendRequest(VKParams params) throws IOException, JSONException, KException {
-        return sendRequest(params, false);
-    }
-
-    public boolean isChatUser(long uid, long cid) throws JSONException, IOException, KException {
+	
+	public boolean isChatUser(long uid, long cid) throws JSONException, IOException, KException {
         ArrayList<VKFullUser> apiChat = getChatUsers(cid, "");
         for (VKFullUser user : apiChat) {
             return String.valueOf(user.uid).contains(String.valueOf(uid));
@@ -275,6 +241,10 @@ public class Api {
         return false;
     }
 
+    public JSONObject sendRequest(VKParams params) throws IOException, JSONException, KException {
+        return sendRequest(params, false);
+    }
+	
     private JSONObject sendRequest(VKParams params, boolean is_post) throws IOException, JSONException, KException {
         String url = getSignedUrl(params, is_post);
         String body = "";
@@ -298,6 +268,38 @@ public class Api {
         JSONObject root = new JSONObject(response);
         checkError(root, url);
         return root;
+    }
+	
+	public static String sendRequestInternal(String url, String body, boolean is_post) throws IOException {
+        HttpURLConnection connection = null;
+        try {
+            connection = (HttpURLConnection) new URL(url).openConnection();
+            connection.setConnectTimeout(30000);
+            connection.setReadTimeout(30000);
+            connection.setUseCaches(false);
+            connection.setDoOutput(is_post);
+            connection.setDoInput(true);
+            connection.setRequestMethod(is_post ? "POST" : "GET");
+            if (enable_compression)
+                connection.setRequestProperty("Accept-Encoding", "gzip");
+            if (is_post)
+                connection.getOutputStream().write(body.getBytes("UTF-8"));
+            int code = connection.getResponseCode();
+            Log.i(TAG, "code=" + code);
+            //It may happen due to keep-alive problem http://stackoverflow.com/questions/1440957/httpurlconnection-getresponsecode-returns-1-on-second-invocation
+            if (code == -1)
+                throw new WrongResponseCodeException("Network error");
+            //может стоит проверить на код 200
+            //on error can also read error stream from connection.
+            InputStream is = new BufferedInputStream(connection.getInputStream(), 8192);
+            String enc = connection.getHeaderField("Content-Encoding");
+            if (enc != null && enc.equalsIgnoreCase("gzip"))
+                is = new GZIPInputStream(is);
+            return VKUtils.convertStreamToString(is);
+        } finally {
+            if (connection != null)
+                connection.disconnect();
+        }
     }
 
     private void processNetworkException(int i, IOException ex) throws IOException {
@@ -609,6 +611,8 @@ public class Api {
         JSONObject response = request.optJSONObject("response");
         return VKMessageAttachment.parseArray(response.optJSONArray("items"), media_type, response.optInt("next_from"));
     }
+	
+	
 
     /**
      * methods for photos **

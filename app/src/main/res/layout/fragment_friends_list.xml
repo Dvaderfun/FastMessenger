@@ -26,16 +26,14 @@
             android:layout_marginStart="4dp"
             android:src="@drawable/camera_200" />
 
-        <ru.lischenko_dev.fastmessenger.view.CircleImageView
+        <de.hdodenhof.circleimageview.CircleImageView
             android:id="@+id/ivOnline"
             android:layout_width="14dp"
             android:layout_height="14dp"
             android:layout_alignBottom="@id/ivAva"
             android:layout_alignEnd="@+id/ivAva"
             android:layout_alignRight="@id/ivAva"
-            android:src="@color/online"
-            app:border_color="#ffffff"
-            app:border_width="2dp" />
+            android:src="@color/online"/>
 
         <TextView
             android:id="@+id/tvName"

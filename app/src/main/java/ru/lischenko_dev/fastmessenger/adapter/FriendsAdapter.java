@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import ru.lischenko_dev.fastmessenger.R;
 import ru.lischenko_dev.fastmessenger.common.ThemeManager;
 import ru.lischenko_dev.fastmessenger.vkapi.models.VKFullUser;
+import de.hdodenhof.circleimageview.*;
 
 public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHolder> {
 
@@ -73,6 +74,8 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
         holder.tvName.setTextColor(manager.getPrimaryTextColor());
         try {
             holder.ivOnline.setVisibility(user.online ? View.VISIBLE : View.GONE);
+			holder.ivOnline.setBorderColor(manager.isDarkTheme() ? 0xff212121 : 0xffffffff);
+			holder.ivOnline.setBorderWidth(2);
             Picasso.with(context).load(user.photo_medium_rec).placeholder(R.drawable.camera_200).into(holder.ivAva);
         } catch (Exception e) {
             e.printStackTrace();
@@ -91,7 +94,7 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
-        ImageView ivOnline;
+        CircleImageView ivOnline;
         ImageView ivAva;
         TextView tvName;
         TextView tvOnline;
@@ -99,7 +102,7 @@ public class FriendsAdapter extends RecyclerView.Adapter<FriendsAdapter.ViewHold
 
         public ViewHolder(View v) {
             super(v);
-            ivOnline = (ImageView) v.findViewById(R.id.ivOnline);
+            ivOnline = (CircleImageView) v.findViewById(R.id.ivOnline);
             tvOnline = (TextView) v.findViewById(R.id.tvOnline);
             hr = v.findViewById(R.id.hr);
             tvName = (TextView) v.findViewById(R.id.tvName);

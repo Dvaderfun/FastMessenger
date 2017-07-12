@@ -1,46 +1,109 @@
 package ru.lischenko_dev.fastmessenger.adapter;
 
-import android.content.Context;
-import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.PorterDuff;
-import android.graphics.drawable.Drawable;
-import android.net.Uri;
-import android.support.v7.widget.RecyclerView;
-import android.text.TextUtils;
-import android.view.Gravity;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
-import android.widget.Toast;
-
-import com.squareup.picasso.Picasso;
-
-import java.util.ArrayList;
+import android.content.*;
+import android.graphics.*;
+import android.graphics.drawable.*;
+import android.net.*;
+import android.text.*;
+import android.view.*;
+import android.widget.*;
+import com.makeramen.roundedimageview.*;
+import com.squareup.picasso.*;
+import java.util.*;
+import ru.lischenko_dev.fastmessenger.*;
+import ru.lischenko_dev.fastmessenger.common.*;
+import ru.lischenko_dev.fastmessenger.util.*;
+import ru.lischenko_dev.fastmessenger.vkapi.models.*;
 
 import ru.lischenko_dev.fastmessenger.R;
-import ru.lischenko_dev.fastmessenger.common.App;
-import ru.lischenko_dev.fastmessenger.common.ThemeManager;
-import ru.lischenko_dev.fastmessenger.util.TextViewLinkHandler;
-import ru.lischenko_dev.fastmessenger.util.Utils;
-import ru.lischenko_dev.fastmessenger.vkapi.VKUtils;
-import ru.lischenko_dev.fastmessenger.vkapi.models.VKAttachment;
-import ru.lischenko_dev.fastmessenger.vkapi.models.VKFullUser;
-import ru.lischenko_dev.fastmessenger.vkapi.models.VKMessage;
-import android.support.v4.view.*;
+import android.widget.ImageView.*;
+import ru.lischenko_dev.fastmessenger.view.*;
 
-public class MessageHistoryAdapter extends RecyclerView.Adapter<MessageHistoryAdapter.ViewHolder> {
+public class MessageHistoryAdapter extends BaseAdapter {
 
-    private static final int TYPE_NORMAL = 0;
-    private static final int TYPE_FOOTER = 10;
+	@Override
+	public int getCount() {
+
+		return items.size();
+	}
+
+	@Override
+	public Object getItem(int p1) {
+
+		return items.get(p1);
+	}
+
+	@Override
+	public long getItemId(int p1) {
+		return p1;
+	}
+
+	@Override
+	public View getView(int p1, View p2, ViewGroup p3) {
+		View v = LayoutInflater.from(context).inflate(R.layout.fragment_chat_list, p3, false);
+		MessageHistoryItems item = items.get(p1);
+        final VKMessage message = item.msg;
+        final VKFullUser user = item.user;
+
+		TextView tvBody = (TextView) v.findViewById(R.id.tvBody);
+		LinearLayout mainContainer = (LinearLayout) v.findViewById(R.id.main_container);
+		LinearLayout bubble = (LinearLayout) v.findViewById(R.id.bodyContainer);
+		ImageView ivAva = (ImageView) v.findViewById(R.id.ivAva);
+
+		mainContainer.setGravity(message.is_out ? Gravity.END : Gravity.START);
+
+        tvBody.setText(message.body);
+
+
+
+        Drawable bg = context.getResources().getDrawable(R.drawable.ic_msg_bg);
+        tvBody.setGravity(message.is_out ? Gravity.START : Gravity.CENTER_VERTICAL);
+        bg.setColorFilter(message.is_out ? context.getResources().getColor(R.color.colorPrimary) : ThemeManager.get(context).getInBubbleColor(), PorterDuff.Mode.MULTIPLY);
+        tvBody.setTextColor(message.is_out ? Color.WHITE : manager.getBubbleInTextColor());
+        ivAva.setVisibility(message.isChat() ? message.is_out ? View.GONE : View.VISIBLE : View.GONE);
+        tvBody.setLinkTextColor(message.is_out ? Color.WHITE : manager.getAccentColor());
+        if (ivAva.getVisibility() != View.GONE)
+            try {
+                Picasso.with(context).load(user.photo_50).placeholder(R.drawable.camera_200).into(ivAva);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        tvBody.setVisibility(TextUtils.isEmpty(message.body) ? View.GONE : View.VISIBLE);
+        tvBody.setMaxWidth(App.screenWidth - (App.screenWidth / 4));
+
+        ivAva.setOnLongClickListener(new View.OnLongClickListener() {
+				@Override
+				public boolean onLongClick(View p1) {
+					if (user != null)
+						Toast.makeText(context, user.toString(), Toast.LENGTH_SHORT).show();
+					return false;
+				}
+			});
+        bubble.setBackground(bg);
+        tvBody.setMovementMethod(new TextViewLinkHandler() {
+
+				@Override
+				public void onLinkClick(String url) {
+					Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+					intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+					context.startActivity(intent);
+				}
+			});
+
+        if (!message.attachments.isEmpty()) {
+			getAttachments(item.msg, v, tvBody);
+			
+        }
+
+		return v;
+	}
+
+
 
     private ArrayList<MessageHistoryItems> items;
     private Context context;
     private ThemeManager manager;
-    private OnItemClickListener listener;
 
     public MessageHistoryAdapter(ArrayList<MessageHistoryItems> items, Context context) {
         this.items = items;
@@ -48,160 +111,176 @@ public class MessageHistoryAdapter extends RecyclerView.Adapter<MessageHistoryAd
         this.manager = ThemeManager.get(context);
     }
 
-    public void setListener(OnItemClickListener l) {
-        this.listener = l;
-    }
+	private void getAttachments(VKMessage msg, View view, TextView tvBody1) {
+		if (!msg.attachments.isEmpty()) {
+			LinearLayout attach_container = (LinearLayout) view.findViewById(R.id.attach_container);
+			for (final VKAttachment att :msg. attachments)
+				switch (att.type) {
+					case VKAttachment.TYPE_PHOTO:
+						attach_container.setVisibility(View.VISIBLE);
+						
+						final RoundedImageView iv = new RoundedImageView(context);
+						LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(att.photo.width / 2, att.photo.height / 2);
+						iv.setLayoutParams(params);
+						iv.setScaleType(ScaleType.CENTER_CROP);
+						iv.setCornerRadius(15);
+					
+						
+					//	int wheight = attachments.size() > 1 ? App.screenWidth - (App.screenWidth / 2) : App.screenWidth - (App.screenWidth / 4);
+							
+						attach_container.setGravity(msg.is_out ? Gravity.RIGHT : Gravity.LEFT);
+						attach_container.setOrientation(LinearLayout.VERTICAL);
+						attach_container.addView(iv);
+						
+						Picasso.with(context).load(att.photo.src_big).into(iv);
+						
+						
+						break;
+					case VKAttachment.TYPE_STICKER:
+						if (attach_container.getVisibility() == View.GONE)
+							attach_container.setVisibility(View.VISIBLE);
+						final ImageView ivq = new ImageView(context);
+						ivq.setLayoutParams(new LinearLayout.LayoutParams(att.sticker.width, att.sticker.height));
+						attach_container.addView(ivq);
 
-    private void initListeners(View v, final int position) {
-        v.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                if (listener != null) {
-                    listener.onItemLongClick(v, position);
-                }
-                return true;
-            }
-        });
-        v.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (listener != null) {
-                    listener.onItemClick(v, position);
-                }
-            }
-        });
-    }
+						Picasso.with(context)
+							.load(att.sticker.photo_352)
+							.placeholder(new ColorDrawable(Color.GRAY))
+							.into(ivq);
+						break;
+						/*
+					case VKAttachment.TYPE_MESSAGE:
+						if (attach_container.getVisibility() == View.GONE) {
+							attach_container.setVisibility(View.VISIBLE);
+						}
+						View fwd = LayoutInflater.from(context).inflate(R.layout.forward_messages, attach_container, false);
+						fwd.setPadding(4, 2, 4, 2);
+						LinearLayout ll = (LinearLayout) fwd.findViewById(R.id.cont);
+						Drawable ic = context.getResources().getDrawable(R.drawable.ic_msg_bg);
+						ic.setColorFilter(context.getResources().getColor(R.color.colorPrimary), PorterDuff.Mode.MULTIPLY);
+						ll.setBackground(ic);
+						final TextView tvName = (TextView) fwd.findViewById(R.id.tvName);
+						final TextView tvBody = (TextView) fwd.findViewById(R.id.tvBody);
+						new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
 
-    @Override
-    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        if (viewType == TYPE_FOOTER) {
-            return new FooterViewHolder(FooterViewHolder.createFooter(context));
-        }
+										final VKFullUser user = Api.init(Account.get(context)).getProfile(att.message.uid);
 
-        View v = LayoutInflater.from(context).inflate(R.layout.fragment_chat_list, parent, false);
-        return new ViewHolder(v);
-    }
+                                        ((Activity) context).runOnUiThread(new Runnable() {
+												@Override
+												public void run() {
 
-    @Override
-    public void onBindViewHolder(ViewHolder holder, int position) {
-        if (holder.isFooter()) {
-            return;
-        }
-        MessageHistoryItems item = items.get(position);
-        final VKMessage message = item.msg;
-        final VKFullUser user = item.user;
-        initListeners(holder.itemView, position);
-        holder.tvBody.setText(message.body);
-		
-		
-        
-        Drawable bg = context.getResources().getDrawable(R.drawable.ic_msg_bg);
-        holder.tvBody.setGravity(message.is_out ? Gravity.START : Gravity.CENTER_VERTICAL);
-        bg.setColorFilter(message.is_out ? context.getResources().getColor(R.color.colorPrimary) : ThemeManager.get(context).getInBubbleColor(), PorterDuff.Mode.MULTIPLY);
-        holder.tvBody.setTextColor(message.is_out ? Color.WHITE : manager.getBubbleInTextColor());
-        holder.ivAva.setVisibility(message.isChat() ? message.is_out ? View.GONE : View.VISIBLE : View.GONE);
-        holder.tvBody.setLinkTextColor(message.is_out ? Color.WHITE : manager.getAccentColor());
-        if (holder.ivAva.getVisibility() != View.GONE)
-            try {
-                Picasso.with(context).load(user.photo_50).placeholder(R.drawable.camera_200).into(holder.ivAva);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+													tvName.setText(user.toString());
+													tvBody.setText(att.message.body);
+													//Picasso.with(context).load(user.photo_200).placeholder(R.drawable.camera_200).into(ivAva);
 
-        holder.tvBody.setVisibility(TextUtils.isEmpty(message.body) ? View.GONE : View.VISIBLE);
-        holder.tvBody.setMaxWidth(App.screenWidth / 3);
+												}
+											});
+                                    } catch (Exception e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            });
+						attach_container.addView(fwd);
+						break;*/
+					case VKAttachment.TYPE_AUDIO:
+						try {
+							if (attach_container.getVisibility() == View.GONE)
+								attach_container.setVisibility(View.VISIBLE);
+							View v = View.inflate(context, R.layout.audio_attach, null);
+							TextView tvTitle = (TextView) v.findViewById(R.id.tvTitle);
+							ImageView ivPlay = (ImageView) v.findViewById(R.id.ivPlay);
+							ivPlay.setColorFilter(!msg.is_out ? manager.getPrimaryColor() : manager.getBubbleInTextColor());
+							TextView tvArtist = (TextView) v.findViewById(R.id.tvOnline);
+							attach_container.addView(v);
+							RelativeLayout rl = (RelativeLayout) v.findViewById(R.id.base_container_message);
+							GradientDrawable dg = new GradientDrawable();
+							dg.setCornerRadius(85);
+							dg.setColor(msg.is_out ? manager.getPrimaryColor() : manager.getBubbleInTextColor());
+							rl.setBackground(dg);
+							tvArtist.setTextColor(msg.is_out ? Color.WHITE : Color.DKGRAY);
+							tvTitle.setTextColor(msg.is_out ? Color.WHITE : Color.DKGRAY);
+							tvArtist.setText(att.audio.artist);
+							tvTitle.setText(att.audio.title);
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+						break;
+					case VKAttachment.TYPE_DOC:
+						try {
+							if (attach_container.getVisibility() == View.GONE)
+								attach_container.setVisibility(View.VISIBLE);
+							View v = View.inflate(context, R.layout.doc_attach, null);
+							TextView tvTitle = (TextView) v.findViewById(R.id.tvTitle);
+							CircleView ivPlay = (CircleView) v.findViewById(R.id.ivPlay);
+							ivPlay.setCircleColor(Color.parseColor("#ffffff"));
+							ivPlay.setText("." + att.document.ext);
+							GradientDrawable dg = new GradientDrawable();
+							dg.setCornerRadius(85);
+							dg.setColor(msg.is_out ? manager.getPrimaryColor() : manager.getBubbleInTextColor());
+							ivPlay.setTextSize(16);
+							ivPlay.setTextColor(Color.parseColor("#212121"));
+							TextView tvArtist = (TextView) v.findViewById(R.id.tvOnline);
+							attach_container.addView(v);
+							tvTitle.setTextColor(Color.WHITE);
+							tvTitle.setText(att.document.title + "");
+							tvArtist.setText("." + att.document.ext.toUpperCase());
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+						break;
+						/*
+					case VKAttachment.TYPE_VIDEO:
+						attach_container.setVisibility(View.VISIBLE);
+						DisplayMetrics metrics1 = new DisplayMetrics();
+						((Activity) context).getWindowManager().getDefaultDisplay().getMetrics(metrics1);
 
-        holder.ivAva.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View p1) {
-                if (user != null)
-                    Toast.makeText(context, user.toString(), Toast.LENGTH_SHORT).show();
-                return false;
-            }
-        });
-        holder.bubble.setBackground(bg);
-        holder.tvBody.setMovementMethod(new TextViewLinkHandler() {
+						final ImageView iv1 = new ImageView(context);
+						LinearLayout.LayoutParams params1 = new LinearLayout.LayoutParams(180, 180);
+						iv1.setScaleType(ImageView.ScaleType.CENTER);
+						iv1.setLayoutParams(params1);
+						attach_container.setGravity(Gravity.CENTER);
+						attach_container.addView(iv1);
+						Picasso.with(context)
+							.load(att.video.image_big)
+							.resize(180, 180)
+							.centerCrop()
+							.placeholder(Color.LTGRAY)
+							.into(iv1);
 
-            @Override
-            public void onLinkClick(String url) {
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                context.startActivity(intent);
-            }
-        });
+						iv1.setOnClickListener(new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    //startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(att.video.getVideoUrl())).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                                }
+                            });
+						break;
+					case VKAttachment.TYPE_PADE:
+						//tvBody1.setText(item.message.body + "\n" + "Page");
+						break;
+					case VKAttachment.TYPE_WALL:
+						//tvBody1.setText(item.message.body + "\n" + "Wall Post");
+						break;
+					case VKAttachment.TYPE_LINK:
+						//	tvBody1.setText(item.message.body + "\n" + att.link.url);
+						break;
+					case VKAttachment.TYPE_GIFT:
+						if (attach_container.getVisibility() == View.GONE)
+							attach_container.setVisibility(View.VISIBLE);
+						final ImageView giftimg = new ImageView(context);
+						attach_container.addView(giftimg);
 
-        if (!message.attachments.isEmpty()) {
-            for (VKAttachment att : message.attachments)
-                holder.tvBody.setText(holder.tvBody.getText().length() > 0 ? holder.tvBody.getText().toString() + "\n[" + VKUtils.getStringAttachment(att.type) + "]" : "[" + VKUtils.getStringAttachment(att.type) + "]");
-        }
-		if(!item.msg.is_out)
-        holder.mainContainer.setGravity(Gravity.LEFT);
-    }
+						Picasso.with(context)
+							.load(att.gift.thumb_256)
+							.resize(256, 256)
+							.centerInside()
+							.placeholder(new ColorDrawable(Color.GRAY))
+							.into(giftimg);
+						break;*/
+				}
 
-    @Override
-    public int getItemViewType(int position) {
-        if (items.size() == position) {
-            return TYPE_FOOTER;
-        } else {
-            return TYPE_NORMAL;
-        }
-    }
-
-    @Override
-    public int getItemCount() {
-        return items.size() + 1;
-    }
-
-    public interface OnItemClickListener {
-        void onItemClick(View view, int position);
-
-        void onItemLongClick(View view, int position);
-    }
-
-    static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvBody;
-        LinearLayout mainContainer;
-        LinearLayout bubble;
-        ImageView ivAva;
-		LinearLayout bodyGravity;
-
-        public ViewHolder(View v) {
-            super(v);
-            tvBody = (TextView) v.findViewById(R.id.tvBody);
-            mainContainer = (LinearLayout) v.findViewById(R.id.main_container);
-            bubble = (LinearLayout) v.findViewById(R.id.bodyContainer);
-            ivAva = (ImageView) v.findViewById(R.id.ivAva);
-			bodyGravity = (LinearLayout) v.findViewById(R.id.bodyGravity);
-        }
-
-        public boolean isFooter() {
-            return false;
-        }
-
-    }
-
-    private static class FooterViewHolder extends ViewHolder {
-        View footer;
-
-        FooterViewHolder(View v) {
-            super(v);
-            footer = v;
-        }
-
-        public static View createFooter(Context context) {
-            View footer = new View(context);
-            footer.setVisibility(View.VISIBLE);
-            footer.setBackgroundColor(Color.TRANSPARENT);
-            footer.setVisibility(View.INVISIBLE);
-            footer.setEnabled(false);
-            footer.setClickable(false);
-            footer.setLayoutParams(new RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, (int) Utils.convertDpToPixel(context, 75)));
-            return footer;
-        }
-
-        @Override
-        public boolean isFooter() {
-            return true;
-        }
-    }
+		}
+	}
 }

@@ -37,16 +37,13 @@
                     android:layout_centerVertical="true"
                     android:src="@android:color/darker_gray" />
 
-                <ru.lischenko_dev.fastmessenger.view.CircleView
+                <de.hdodenhof.circleimageview.CircleImageView
                     android:id="@+id/ivOnline"
                     android:layout_width="16dp"
                     android:layout_height="16dp"
+					android:src="@color/online"
                     android:layout_alignBottom="@+id/ivAva"
-                    android:layout_alignRight="@+id/ivAva"
-                    app:border_color="@android:color/white"
-                    app:border_width="2dp"
-                    app:fill_color_view="@color/online"
-                    app:text_view="231" />
+                    android:layout_alignRight="@+id/ivAva" />
 
             </RelativeLayout>
 
